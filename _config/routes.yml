@@ -1,0 +1,7 @@
+---
+Name: tiptaproutes
+After: '#coreroutes'
+---
+SilverStripe\Control\Director:
+  rules:
+    'api/pagetree': 'OP\PageTreeController'

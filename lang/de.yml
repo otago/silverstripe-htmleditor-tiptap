@@ -1,0 +1,78 @@
+de:
+  SilverStripeTipTap:
+    # Main toolbar buttons
+    BOLD_TOOLTIP: 'Fett (Strg+B)'
+    ITALIC_TOOLTIP: 'Kursiv (Strg+I)'
+    UNDERLINE_TOOLTIP: 'Unterstreichen (Strg+U)'
+    STRIKETHROUGH_TOOLTIP: 'Durchstreichen (Strg+Shift+X)'
+    SUBSCRIPT_TOOLTIP: 'Tiefgestellt (Strg+,)'
+    SUPERSCRIPT_TOOLTIP: 'Hochgestellt (Strg+.)'
+    CODE_TOOLTIP: 'Inline-Code (Strg+E)'
+    HIGHLIGHT_TOOLTIP: 'Hervorheben'
+    # Heading and paragraph buttons
+    PARAGRAPH_TOOLTIP: 'Absatz'
+    HEADING1_TOOLTIP: 'Überschrift 1 (Strg+Alt+1)'
+    HEADING2_TOOLTIP: 'Überschrift 2 (Strg+Alt+2)'
+    HEADING3_TOOLTIP: 'Überschrift 3 (Strg+Alt+3)'
+    HEADING4_TOOLTIP: 'Überschrift 4 (Strg+Alt+4)'
+    HEADING5_TOOLTIP: 'Überschrift 5 (Strg+Alt+5)'
+    HEADING6_TOOLTIP: 'Überschrift 6 (Strg+Alt+6)'
+    HEADING_TOOLTIP: 'Überschriften'
+    ALIGN_TOOLTIP: 'Textausrichtung'
+    STYLES_TOOLTIP: 'Stile'
+    BLOCKQUOTE_TOOLTIP: 'Zitat (Strg+Shift+B)'
+    HORIZONTALRULE_TOOLTIP: 'Horizontale Linie einfügen'
+    CODEBLOCK_TOOLTIP: 'Code-Block (Strg+Alt+C)'
+    LINK_TOOLTIP: 'Link (Strg+K)'
+    IMAGE_TOOLTIP: 'Bild'
+    UNDO_TOOLTIP: 'Rückgängig (Strg+Z)'
+    REDO_TOOLTIP: 'Wiederholen (Strg+Y)'
+    FULLSCREEN_TOOLTIP: 'Vollbild umschalten (F11)'
+    HTMLSOURCE_TOOLTIP: 'HTML-Quellcode (Strg+Shift+H)'
+    TABLE_TOOLTIP: 'Tabelle'
+    
+    # Heading dropdown options
+    HEADING_H1: 'Überschrift 1'
+    HEADING_H2: 'Überschrift 2'
+    HEADING_H3: 'Überschrift 3'
+    HEADING_H4: 'Überschrift 4'
+    HEADING_H5: 'Überschrift 5'
+    HEADING_H6: 'Überschrift 6'
+    HEADING_PARAGRAPH: 'Absatz'
+    
+    # List dropdown options
+    LIST_BULLET: 'Aufzählung'
+    LIST_ORDERED: 'Nummerierte Liste'
+    
+    # Alignment dropdown options
+    ALIGN_LEFT: 'Links ausrichten (Strg+L)'
+    ALIGN_CENTER: 'Zentrieren (Strg+E)'
+    ALIGN_RIGHT: 'Rechts ausrichten (Strg+R)'
+    ALIGN_JUSTIFY: 'Blocksatz (Strg+J)'
+    
+    # Table dropdown options
+    TABLE_INSERT: 'Tabelle einfügen'
+    TABLE_ADD_COLUMN_BEFORE: 'Spalte davor einfügen'
+    TABLE_ADD_COLUMN_AFTER: 'Spalte danach einfügen'
+    TABLE_DELETE_COLUMN: 'Spalte löschen'
+    TABLE_ADD_ROW_BEFORE: 'Zeile davor einfügen'
+    TABLE_ADD_ROW_AFTER: 'Zeile danach einfügen'
+    TABLE_DELETE_ROW: 'Zeile löschen'
+    TABLE_DELETE: 'Tabelle löschen'
+    TABLE_MERGE_CELLS: 'Zellen zusammenführen'
+    TABLE_SPLIT_CELL: 'Zelle teilen'
+    TABLE_TOGGLE_HEADER_COLUMN: 'Kopfzeile-Spalte umschalten'
+    TABLE_TOGGLE_HEADER_ROW: 'Kopfzeile-Zeile umschalten'
+    TABLE_TOGGLE_HEADER_CELL: 'Kopfzeile-Zelle umschalten'
+    
+    # Link dropdown options
+    LINKS_TOOLTIP: 'Link einfügen'
+    SS_LINK_SITE: 'Link zu Seite'
+    SS_LINK_EXT: 'Externer Link'
+    
+    # Link dropdown options
+    LINKS_TOOLTIP: 'Link einfügen'
+    SS_LINK_SITE: 'Link zu Seite'
+    SS_LINK_EXT: 'Externer Link'
+    SS_LINK_MEDIA: 'Link zu Medien'
+    SS_LINK_FILE: 'Link zu Datei'

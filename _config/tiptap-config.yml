@@ -1,0 +1,100 @@
+---
+Name: tiptap-config
+---
+SilverStripe\Admin\LeftAndMain:
+  extra_requirements_css:
+    - 'otago/silverstripe-tiptap: client/css/tiptap.css'
+  extra_requirements_javascript:
+    - 'otago/silverstripe-tiptap: client/dist/silverstripe-tiptap.iife.js'
+
+SilverStripe\Forms\HTMLEditor\HTMLEditorField:
+  extensions:
+    - OP\TipTapFieldExtension
+  tiptap_config:
+    # Toolbar layout - order matters
+    toolbar:
+      - 'undo'
+      - 'redo'
+      - 'separator'
+      - 'dropdown':
+        title: 'Heading and Paragraph'
+        icon: 'headings'
+        actions:
+        - 'heading1'
+        - 'heading2'
+        - 'heading3'
+        - 'paragraph'
+      - 'dropdown':
+        title: 'Lists'
+        icon: 'lists'
+        actions:
+        - 'bulletList'
+        - 'orderedList'
+      - 'blockquote'
+      - 'codeBlock'
+      - 'separator'
+      - 'bold'
+      - 'italic' 
+      - 'strikethrough'
+      - 'code'
+      - 'underline'
+      - 'highlight'
+      - 'newline'  # Force wrap to new line
+      - 'subscript'
+      - 'superscript'
+      - 'separator'
+      - 'dropdown':
+        title: 'Align'
+        icon: 'align'
+        actions:
+        - 'alignLeft'
+        - 'alignCenter'
+        - 'alignRight'
+        - 'alignJustify'
+      - 'styles'
+      - 'separator'
+      - 'table'
+      - 'separator'
+      - 'fullscreen'
+      - 'htmlSource'
+      - 'ss-link-media': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-media.js'
+      - 'horizontalRule'
+      - 'dropdown':
+        title: 'Links'
+        icon: 'links'
+        actions:
+        - 'ss-link-site': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-page-on-site.js'
+        - 'ss-link-ext': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-external.js'
+        - 'ss-link-file': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-file.js'
+
+    # Heading configuration
+    headingLevels:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+    
+    # Styles configuration
+    styles:
+      - title: 'Warning Text'
+        className: 'warning'
+        previewClass: 'warning-preview'
+      - title: 'Alerts'
+        children:
+          - title: 'Error'
+            className: 'alert-error'
+            previewClass: 'alert-error-preview'
+          - title: 'Info'
+            className: 'alert-info'
+            previewClass: 'alert-info-preview'
+          - title: 'Success'
+            className: 'alert-success'
+            previewClass: 'alert-success-preview'
+      - title: 'Highlight Text'
+        className: 'text-highlight'
+        previewClass: 'text-highlight-preview'
+    
+    # Editor settings
+    autofocus: false

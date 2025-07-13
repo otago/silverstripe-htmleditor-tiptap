@@ -1,0 +1,74 @@
+en:
+  SilverStripeTipTap:
+    # Main toolbar buttons
+    BOLD_TOOLTIP: 'Bold (Ctrl+B)'
+    ITALIC_TOOLTIP: 'Italic (Ctrl+I)'
+    UNDERLINE_TOOLTIP: 'Underline (Ctrl+U)'
+    STRIKETHROUGH_TOOLTIP: 'Strikethrough (Ctrl+Shift+X)'
+    SUBSCRIPT_TOOLTIP: 'Subscript (Ctrl+,)'
+    SUPERSCRIPT_TOOLTIP: 'Superscript (Ctrl+.)'
+    CODE_TOOLTIP: 'Inline Code (Ctrl+E)'
+    HIGHLIGHT_TOOLTIP: 'Highlight'
+    # Heading and paragraph buttons
+    PARAGRAPH_TOOLTIP: 'Paragraph'
+    HEADING1_TOOLTIP: 'Heading 1 (Ctrl+Alt+1)'
+    HEADING2_TOOLTIP: 'Heading 2 (Ctrl+Alt+2)'
+    HEADING3_TOOLTIP: 'Heading 3 (Ctrl+Alt+3)'
+    HEADING4_TOOLTIP: 'Heading 4 (Ctrl+Alt+4)'
+    HEADING5_TOOLTIP: 'Heading 5 (Ctrl+Alt+5)'
+    HEADING6_TOOLTIP: 'Heading 6 (Ctrl+Alt+6)'
+    HEADING_TOOLTIP: 'Headings'
+    ALIGN_TOOLTIP: 'Text Alignment'
+    STYLES_TOOLTIP: 'Styles'
+    BLOCKQUOTE_TOOLTIP: 'Quote (Ctrl+Shift+B)'
+    HORIZONTALRULE_TOOLTIP: 'Insert Horizontal Rule'
+    CODEBLOCK_TOOLTIP: 'Code Block (Ctrl+Alt+C)'
+    LINK_TOOLTIP: 'Link (Ctrl+K)'
+    IMAGE_TOOLTIP: 'Image'
+    UNDO_TOOLTIP: 'Undo (Ctrl+Z)'
+    REDO_TOOLTIP: 'Redo (Ctrl+Y)'
+    FULLSCREEN_TOOLTIP: 'Toggle Fullscreen (F11)'
+    HTMLSOURCE_TOOLTIP: 'HTML Source (Ctrl+Shift+H)'
+    HARDBREAK_TOOLTIP: 'Insert Line Break (Shift+Enter)'
+    TABLE_TOOLTIP: 'Table'
+    
+    # Heading dropdown options
+    HEADING_H1: 'Heading 1'
+    HEADING_H2: 'Heading 2'
+    HEADING_H3: 'Heading 3'
+    HEADING_H4: 'Heading 4'
+    HEADING_H5: 'Heading 5'
+    HEADING_H6: 'Heading 6'
+    HEADING_PARAGRAPH: 'Paragraph'
+    
+    # List dropdown options
+    LIST_BULLET: 'Bullet List'
+    LIST_ORDERED: 'Numbered List'
+    
+    # Alignment dropdown options
+    ALIGN_LEFT: 'Align Left (Ctrl+L)'
+    ALIGN_CENTER: 'Align Center (Ctrl+E)'
+    ALIGN_RIGHT: 'Align Right (Ctrl+R)'
+    ALIGN_JUSTIFY: 'Justify (Ctrl+J)'
+    
+    # Table dropdown options
+    TABLE_INSERT: 'Insert Table'
+    TABLE_ADD_COLUMN_BEFORE: 'Add Column Before'
+    TABLE_ADD_COLUMN_AFTER: 'Add Column After'
+    TABLE_DELETE_COLUMN: 'Delete Column'
+    TABLE_ADD_ROW_BEFORE: 'Add Row Before'
+    TABLE_ADD_ROW_AFTER: 'Add Row After'
+    TABLE_DELETE_ROW: 'Delete Row'
+    TABLE_DELETE: 'Delete Table'
+    TABLE_MERGE_CELLS: 'Merge Cells'
+    TABLE_SPLIT_CELL: 'Split Cell'
+    TABLE_TOGGLE_HEADER_COLUMN: 'Toggle Header Column'
+    TABLE_TOGGLE_HEADER_ROW: 'Toggle Header Row'
+    TABLE_TOGGLE_HEADER_CELL: 'Toggle Header Cell'
+    
+    # Link dropdown options
+    LINKS_TOOLTIP: 'Insert Link'
+    SS_LINK_SITE: 'Link to Page'
+    SS_LINK_EXT: 'External Link'
+    SS_LINK_MEDIA: 'Link to Media'
+    SS_LINK_FILE: 'Link to File'

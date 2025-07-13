@@ -1,0 +1,39 @@
+{
+  "name": "otago/silverstripe-tiptap",
+  "description": "SilverStripe Tiptap WYSIWYG editor",
+  "type": "silverstripe-vendormodule",
+  "keywords": [
+    "silverstripe",
+    "editor",
+    "wysiwyg",
+    "tiptap"
+  ],
+  "license": "BSD-3-Clause",
+  "authors": [
+    {
+      "name": "Your Name",
+      "email": "your.email@example.com"
+    }
+  ],
+  "require": {
+    "silverstripe/vendor-plugin": "^2.0",
+    "silverstripe/framework": "^5.0 || ^6.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  },
+  "extra": {
+    "installer-name": "silverstripe-tiptap",
+    "expose": [
+      "client/dist",
+      "client/css",
+      "client/ext"
+    ],
+    "silverstripe-module": {
+      "name": "TipTap Editor",
+      "description": "TipTap WYSIWYG editor for SilverStripe"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

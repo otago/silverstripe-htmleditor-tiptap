@@ -1,0 +1,36 @@
+{
+    "name": "silverstripe-tiptap-editor",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Tiptap editor integration for Silverstripe CMS using dynamic YML configuration.",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "watch": "vite build --watch"
+    },
+    "author": "Your Name",
+    "license": "MIT",
+    "dependencies": {
+        "@tiptap/core": "^2.2.0",
+        "@tiptap/extension-color": "^2.25.0",
+        "@tiptap/extension-highlight": "^2.2.0",
+        "@tiptap/extension-image": "^2.2.0",
+        "@tiptap/extension-link": "^2.2.0",
+        "@tiptap/extension-subscript": "^2.25.0",
+        "@tiptap/extension-superscript": "^2.25.0",
+        "@tiptap/extension-table": "^2.25.0",
+        "@tiptap/extension-table-cell": "^2.25.0",
+        "@tiptap/extension-table-header": "^2.25.0",
+        "@tiptap/extension-table-row": "^2.25.0",
+        "@tiptap/extension-text-align": "^2.25.0",
+        "@tiptap/extension-text-style": "^2.25.0",
+        "@tiptap/extension-underline": "^2.2.0",
+        "@tiptap/starter-kit": "^2.2.0",
+        "prosemirror-model": "^1.25.2",
+        "prosemirror-view": "^1.40.0",
+        "screenfull": "^6.0.2"
+    },
+    "devDependencies": {
+        "vite": "^6.3.5"
+    }
+}
