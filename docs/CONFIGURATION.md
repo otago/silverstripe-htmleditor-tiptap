@@ -123,25 +123,6 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorField:
 
 The TipTap integration supports dynamic loading of JavaScript extensions through YML configuration. This allows you to add custom toolbar buttons and functionality without modifying the core code.
 
-#### Setting Up Extensions
-
-1. **Create Extension Directory**: Extensions should be placed in the `client/ext/` directory of your module
-2. **Expose Directory**: Add the `client/ext` directory to your module's `composer.json` expose configuration:
-
-```json
-{
-  "extra": {
-    "expose": [
-      "client/dist",
-      "client/css",
-      "client/ext"
-    ]
-  }
-}
-```
-
-3. **Run Composer**: After updating composer.json, run `composer vendor-expose` to make the files publicly accessible
-
 #### Extension Configuration
 
 Extensions can be defined in several ways:
@@ -207,28 +188,6 @@ export default {
 };
 ```
 
-### Heading Levels
-
-Customize which heading levels are available:
-
-```yml
-SilverStripe\Forms\HTMLEditor\HTMLEditorField:
-  tiptap_config:
-    headingLevels:
-      - 1  # H1
-      - 2  # H2
-      - 3  # H3
-```
-
-### Editor Settings
-
-```yml
-SilverStripe\Forms\HTMLEditor\HTMLEditorField:
-  tiptap_config:
-    autofocus: false                    # Auto-focus editor on load
-    placeholder: 'Start typing...'      # Placeholder text
-    minHeight: 200                      # Minimum editor height in pixels
-```
 
 ### Custom Styles
 
