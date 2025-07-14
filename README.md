@@ -12,7 +12,54 @@ With SilverStripe 6 moving TinyMCE to an optional plugin, now's the perfect time
 
 For a full configuration guide, see the [configuration document](docs/CONFIGURATION.md).
 
-Here are some example toolbar configurations you can drop into your project.
+### Available Toolbar Items
+
+- **bold** - Bold text button (Ctrl+B)
+- **italic** - Italic text button (Ctrl+I)
+- **underline** - Underline text button (Ctrl+U)
+- **strikethrough** - Strikethrough text button (Ctrl+Shift+X)
+- **code** - Inline code button (for `inline code` snippets) (Ctrl+E)
+- **subscript** - Subscript button (for X<sub>2</sub> formatting) (Ctrl+,)
+- **superscript** - Superscript button (for X<sup>2</sup> formatting) (Ctrl+.)
+- **highlight** - Text highlight button
+- **paragraph** - Paragraph button
+- **heading1** - Heading 1 button (Ctrl+Alt+1)
+- **heading2** - Heading 2 button (Ctrl+Alt+2)
+- **heading3** - Heading 3 button (Ctrl+Alt+3)
+- **heading4** - Heading 4 button (Ctrl+Alt+4)
+- **heading5** - Heading 5 button (Ctrl+Alt+5)
+- **heading6** - Heading 6 button (Ctrl+Alt+6)
+- **heading** - Heading dropdown (H1, H2, H3, Paragraph) - *Alternative to individual buttons*
+- **bulletList** - Bullet list button
+- **orderedList** - Numbered list button
+- **lists** - List dropdown (Bullet List, Numbered List) - *Alternative to individual buttons*
+- **alignLeft** - Align text left button (Ctrl+L)
+- **alignCenter** - Align text center button (Ctrl+E)
+- **alignRight** - Align text right button (Ctrl+R)
+- **alignJustify** - Justify text button (Ctrl+J)
+- **align** - Text alignment dropdown (Left, Center, Right, Justify) - *Alternative to individual buttons*
+- **styles** - Custom styles dropdown (configurable CSS classes)
+- **table** - Table dropdown (Insert Table, Add/Delete Rows/Columns, Merge/Split Cells, Toggle Headers)
+- **blockquote** - Blockquote button (Ctrl+Shift+B)
+- **horizontalRule** - Insert horizontal rule (`<hr/>`) button
+- **codeBlock** - Code block button (Ctrl+Alt+C)
+- **link** - Link button (basic prompt-based) (Ctrl+K)
+- **image** - Image button (basic prompt-based)
+- **undo** - Undo button (Ctrl+Z)
+- **redo** - Redo button (Ctrl+Y)
+- **fullscreen** - Toggle fullscreen mode button (F11)
+- **htmlSource** - Toggle HTML source view button (Ctrl+Shift+H)
+- **separator** - Visual separator between button groups
+- **newline** - Force toolbar to wrap to the next line
+- **dropdown** - Create grouped dropdowns with custom titles, icons, and actions
+
+There are also SilverStripe specific extensions. These also serves as examples if you want to customise TipTap:
+
+
+- **ss-link-site** - links to an exisiting page in the SilverStripe SiteTree
+- **ss-link-ext** - external links, anchor tags, routes etc.
+- **ss-link-file** - links to a SilverStripe file inside assets
+- **ss-link-media** - embeds an image
 
 ---
 
