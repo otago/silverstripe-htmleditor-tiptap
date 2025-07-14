@@ -6,6 +6,12 @@ A modern WYSIWYG editor for SilverStripe using the powerful and extensible [TipT
 
 With SilverStripe 6 moving TinyMCE to an optional plugin, now's the perfect time to upgrade to something **better**.
 
+# Install
+
+`composer remove silverstripe/htmleditor-tinymce`
+
+`composer require otago/silverstripe-tiptap`
+
 ---
 
 ## Configuration
