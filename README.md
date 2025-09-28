@@ -1,4 +1,4 @@
-# SilverStripe TipTap WYSIWYG Editor
+# SilverStripe TipTap htmleditor WYSIWYG Editor
 
 ![Preview](docs/preview.gif)
 
