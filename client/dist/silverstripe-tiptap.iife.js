@@ -23133,8 +23133,7 @@ img.ProseMirror-separator {
             }
             if (!itemConfig) {
               let buttontitle = config.tooltips && config.tooltips[itemName] ? config.tooltips[itemName] : itemName;
-              const parts = this.parseTooltipText(buttontitle);
-              console.log("buttontitle", buttontitle, parts, config.tooltips);
+              this.parseTooltipText(buttontitle);
               const itemConfig2 = {
                 action: itemName,
                 extension: itemName,

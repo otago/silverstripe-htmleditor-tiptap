@@ -592,7 +592,7 @@ import screenfull from 'screenfull';
 
             // Parse tooltip to extract just the title part for button text
             const parts = this.parseTooltipText(buttontitle);
-console.log('buttontitle', buttontitle, parts, config.tooltips);
+            
             const itemConfig = {
               action: itemName,
               extension: itemName,
