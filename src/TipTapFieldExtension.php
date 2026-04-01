@@ -17,6 +17,28 @@ use SilverStripe\Dev\Debug;
 class TipTapFieldExtension extends Extension
 {
     /**
+     * This allows it to work for elemental items.
+     * Apply TipTap attributes during standard attribute generation.
+     * This runs for both template-rendered and schema-driven CMS fields.
+     *
+     * @param array $attributes
+     */
+    public function updateAttributes(&$attributes)
+    {
+        if (!$this->owner instanceof HTMLEditorField) {
+            return;
+        }
+
+        $config = $this->getTipTapConfig();
+        $attributes['data-tiptap-config'] = json_encode($config);
+
+        $existingClasses = isset($attributes['class']) ? trim((string) $attributes['class']) : '';
+        if (strpos(" {$existingClasses} ", ' tiptap-editor ') === false) {
+            $attributes['class'] = trim($existingClasses . ' tiptap-editor');
+        }
+    }
+
+    /**
      * Get the TipTap configuration for this field
      * 
      * @return array
