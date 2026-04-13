@@ -658,15 +658,15 @@ import screenfull from 'screenfull';
 
       // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
       normalizeContentForTiptap: function (content) {
-        if (!content || typeof content !== 'string') {
-          return content;
+        if (window.TipTapExtensions) {
+          // Loop through extensions to find any that have a normalizeContentForTiptap method
+          for (const extensionName in window.TipTapExtensions) {
+            const ExtensionClass = window.TipTapExtensions[extensionName];
+            if (ExtensionClass && typeof ExtensionClass.normalizeContentForTiptap === 'function') {
+              content = ExtensionClass.normalizeContentForTiptap(content);
+            }
+          }
         }
-
-        const mediaExtension = window.TipTapExtensions && window.TipTapExtensions['ss-link-media'];
-        if (mediaExtension && typeof mediaExtension.normalizeContentForTiptap === 'function') {
-          return mediaExtension.normalizeContentForTiptap(content);
-        }
-
         return content;
       },
 

@@ -280,12 +280,8 @@ window.TipTapExtensions['ss-link-media'] = {
                 attrs[attrMatch[1]] = attrMatch[2];
             }
 
-            if (!attrs.src) {
-                return match;
-            }
-
             const htmlAttrs = [];
-            htmlAttrs.push(`src="${attrs.src}"`);
+            htmlAttrs.push(`src="${attrs.src || ''}"`);
             if (attrs.alt) htmlAttrs.push(`alt="${attrs.alt}"`);
             if (attrs.width) htmlAttrs.push(`width="${attrs.width}"`);
             if (attrs.height) htmlAttrs.push(`height="${attrs.height}"`);

@@ -23184,12 +23184,13 @@ img.ProseMirror-separator {
         },
         // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
         normalizeContentForTiptap: function(content) {
-          if (!content || typeof content !== "string") {
-            return content;
-          }
-          const mediaExtension = window.TipTapExtensions && window.TipTapExtensions["ss-link-media"];
-          if (mediaExtension && typeof mediaExtension.normalizeContentForTiptap === "function") {
-            return mediaExtension.normalizeContentForTiptap(content);
+          if (window.TipTapExtensions) {
+            for (const extensionName in window.TipTapExtensions) {
+              const ExtensionClass = window.TipTapExtensions[extensionName];
+              if (ExtensionClass && typeof ExtensionClass.normalizeContentForTiptap === "function") {
+                content = ExtensionClass.normalizeContentForTiptap(content);
+              }
+            }
           }
           return content;
         },
