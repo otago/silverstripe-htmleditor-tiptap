@@ -2,6 +2,7 @@
 
 namespace OP;
 
+use SilverStripe\Assets\Shortcodes\ImageShortcodeProvider;
 use SilverStripe\Core\Extension;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Forms\HTMLEditor\HTMLEditorField;
@@ -28,6 +29,8 @@ class TipTapFieldExtension extends Extension
         if (!$this->owner instanceof HTMLEditorField) {
             return;
         }
+
+        $this->parseImageShortcodesForEditor();
 
         $config = $this->getTipTapConfig();
         $attributes['data-tiptap-config'] = json_encode($config);
@@ -221,9 +224,30 @@ class TipTapFieldExtension extends Extension
     public function onBeforeRender()
     {
         if ($this->owner instanceof HTMLEditorField) {
+            $this->parseImageShortcodesForEditor();
             $config = $this->getTipTapConfig();
             $this->owner->setAttribute('data-tiptap-config', json_encode($config));
             $this->owner->addExtraClass('tiptap-editor');
+        }
+    }
+
+    /**
+     * Ensure image shortcodes are converted to editor-visible img tags before rendering.
+     */
+    protected function parseImageShortcodesForEditor()
+    {
+        if (!$this->owner instanceof HTMLEditorField) {
+            return;
+        }
+
+        $value = $this->owner->getValue();
+        if (!is_string($value) || $value === '') {
+            return;
+        }
+
+        $parsedValue = ImageShortcodeProvider::regenerate_html_links($value . '[image id=1]');
+        if ($parsedValue !== $value) {
+            $this->owner->setValue($parsedValue);
         }
     }
 }
