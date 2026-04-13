@@ -22754,10 +22754,11 @@ img.ProseMirror-separator {
               TableHeader,
               TableCell
             ];
+            const initialContent = this.normalizeContentForTiptap(this.val() || config.content || "");
             const editor = new Editor({
               element: wrapper[0],
               extensions,
-              content: this.val() || config.content || "",
+              content: initialContent,
               autofocus: config.autofocus || false,
               onUpdate: ({ editor: editor2 }) => {
                 const html = editor2.getHTML();
@@ -23180,6 +23181,17 @@ img.ProseMirror-separator {
           editor.on("selectionUpdate", () => {
             this.updateToolbarStates(toolbar, editor);
           });
+        },
+        // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
+        normalizeContentForTiptap: function(content) {
+          if (!content || typeof content !== "string") {
+            return content;
+          }
+          const mediaExtension = window.TipTapExtensions && window.TipTapExtensions["ss-link-media"];
+          if (mediaExtension && typeof mediaExtension.normalizeContentForTiptap === "function") {
+            return mediaExtension.normalizeContentForTiptap(content);
+          }
+          return content;
         },
         // Initialize extensions
         initializeExtensions: function(extensions, editor, config) {
@@ -24048,7 +24060,8 @@ img.ProseMirror-separator {
           const htmlTextarea = wrapper.data("html-textarea");
           if (htmlTextarea) {
             const htmlContent = htmlTextarea.val();
-            editor.commands.setContent(htmlContent);
+            const normalizedHtmlContent = this.normalizeContentForTiptap(htmlContent);
+            editor.commands.setContent(normalizedHtmlContent);
             htmlTextarea.remove();
             wrapper.removeData("html-textarea");
           }

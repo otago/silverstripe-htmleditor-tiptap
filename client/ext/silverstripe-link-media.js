@@ -262,6 +262,44 @@ window.TipTapExtensions['ss-link-media'] = {
     },
 
     /**
+     * Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
+     * @param {string} content - HTML/source content
+     * @returns {string} Normalized content
+     */
+    normalizeContentForTiptap: function (content) {
+        if (!content || typeof content !== 'string') {
+            return content;
+        }
+
+        return content.replace(/\[image\s+([^\]]*)\]/gi, (match, attrText) => {
+            const attrs = {};
+            const attrRegex = /(\w[\w-]*)="([^"]*)"/g;
+            let attrMatch;
+
+            while ((attrMatch = attrRegex.exec(attrText)) !== null) {
+                attrs[attrMatch[1]] = attrMatch[2];
+            }
+
+            if (!attrs.src) {
+                return match;
+            }
+
+            const htmlAttrs = [];
+            htmlAttrs.push(`src="${attrs.src}"`);
+            if (attrs.alt) htmlAttrs.push(`alt="${attrs.alt}"`);
+            if (attrs.width) htmlAttrs.push(`width="${attrs.width}"`);
+            if (attrs.height) htmlAttrs.push(`height="${attrs.height}"`);
+            if (attrs.title) htmlAttrs.push(`title="${attrs.title}"`);
+            if (attrs.class) htmlAttrs.push(`class="${attrs.class}"`);
+            if (attrs.id) htmlAttrs.push(`data-id="${attrs.id}"`);
+            if (attrs.loading) htmlAttrs.push(`data-loading="${attrs.loading}"`);
+            htmlAttrs.push('data-shortcode="image"');
+
+            return `<img ${htmlAttrs.join(' ')} />`;
+        });
+    },
+
+    /**
      * Get default upload folder ID
      * @returns {number|null} Folder ID
      */

@@ -151,10 +151,12 @@ import screenfull from 'screenfull';
           ];
 
           // Create TipTap editor
+          const initialContent = this.normalizeContentForTiptap(this.val() || config.content || '');
+
           const editor = new Editor({
             element: wrapper[0],
             extensions: extensions,
-            content: this.val() || config.content || '',
+            content: initialContent,
             autofocus: config.autofocus || false,
             onUpdate: ({ editor }) => {
               // Sync content back to textarea
@@ -652,6 +654,20 @@ import screenfull from 'screenfull';
         editor.on('selectionUpdate', () => {
           this.updateToolbarStates(toolbar, editor);
         });
+      },
+
+      // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
+      normalizeContentForTiptap: function (content) {
+        if (!content || typeof content !== 'string') {
+          return content;
+        }
+
+        const mediaExtension = window.TipTapExtensions && window.TipTapExtensions['ss-link-media'];
+        if (mediaExtension && typeof mediaExtension.normalizeContentForTiptap === 'function') {
+          return mediaExtension.normalizeContentForTiptap(content);
+        }
+
+        return content;
       },
 
       // Initialize extensions
@@ -1749,9 +1765,10 @@ import screenfull from 'screenfull';
         if (htmlTextarea) {
           // Get the HTML content from textarea
           const htmlContent = htmlTextarea.val();
+          const normalizedHtmlContent = this.normalizeContentForTiptap(htmlContent);
 
           // Update the editor with the new HTML
-          editor.commands.setContent(htmlContent);
+          editor.commands.setContent(normalizedHtmlContent);
 
           // Remove the textarea
           htmlTextarea.remove();
