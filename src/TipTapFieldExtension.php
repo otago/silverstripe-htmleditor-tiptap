@@ -18,6 +18,34 @@ use SilverStripe\Dev\Debug;
 class TipTapFieldExtension extends Extension
 {
     /**
+     * @var array<string, bool>
+     */
+    protected static $loadedExtensionAssets = [];
+
+    /**
+     * @var bool
+     */
+    protected static $globalExtensionAssetsLoaded = false;
+
+    /**
+     * Mark extension assets as already loaded globally in CMS.
+     */
+    public static function markGlobalExtensionAssetsLoaded()
+    {
+        self::$globalExtensionAssetsLoaded = true;
+    }
+
+    /**
+     * Check whether extension assets are already loaded globally.
+     *
+     * @return bool
+     */
+    public static function hasGlobalExtensionAssetsLoaded()
+    {
+        return self::$globalExtensionAssetsLoaded;
+    }
+
+    /**
      * This allows it to work for elemental items.
      * Apply TipTap attributes during standard attribute generation.
      * This runs for both template-rendered and schema-driven CMS fields.
@@ -73,8 +101,11 @@ class TipTapFieldExtension extends Extension
         $resourceLoader = new ModuleResourceLoader();
         $resolvedPath = $resourceLoader->resolveURL($extensionPath);
 
-        // Include the JavaScript file
-        Requirements::javascript($resolvedPath);
+        // Include the JavaScript file only when not already globally loaded
+        if (!self::hasGlobalExtensionAssetsLoaded() && !isset(self::$loadedExtensionAssets[$resolvedPath])) {
+            Requirements::javascript($resolvedPath);
+            self::$loadedExtensionAssets[$resolvedPath] = true;
+        }
 
         // Add to processed toolbar
         $processedToolbar[] = $extensionName;

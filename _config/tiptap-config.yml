@@ -2,6 +2,8 @@
 Name: tiptap-config
 ---
 SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - OP\TipTapLeftAndMainExtension
   extra_requirements_css:
     - 'otago/silverstripe-tiptap: client/css/tiptap.css'
   extra_requirements_javascript:
