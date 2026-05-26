@@ -245,7 +245,7 @@ class TipTapFieldExtension extends Extension
             return;
         }
 
-        $parsedValue = ImageShortcodeProvider::regenerate_html_links($value . '[image id=1]');
+        $parsedValue = ImageShortcodeProvider::regenerate_html_links($value);
         if ($parsedValue !== $value) {
             $this->owner->setValue($parsedValue);
         }
