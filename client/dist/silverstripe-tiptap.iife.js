@@ -22648,7 +22648,6 @@ img.ProseMirror-separator {
       CSS_CLASSES: {
         WRAPPER: "tiptap-wrapper",
         TOOLBAR: "tiptap-toolbar",
-        FOCUSED: "editor-focused",
         FULLSCREEN: "tiptap-fullscreen",
         HTML_SOURCE: "html-source-mode",
         HTML_TEXTAREA: "tiptap-html-source",
@@ -22682,6 +22681,7 @@ img.ProseMirror-separator {
     $.entwine("ss", function($2) {
       $2("textarea.htmleditor").entwine({
         onmatch: function() {
+          var _a;
           let config;
           try {
             const configAttr = this.attr("data-tiptap-config");
@@ -22702,6 +22702,63 @@ img.ProseMirror-separator {
             const wrapper = $2(`<div class="${CONSTANTS.CSS_CLASSES.WRAPPER}"></div>`);
             this.after(wrapper);
             this.hide();
+            const textareaElement = this[0];
+            const textareaName = this.attr("name") || "";
+            const textareaValueSetter = (_a = Object.getOwnPropertyDescriptor(
+              window.HTMLTextAreaElement.prototype,
+              "value"
+            )) == null ? void 0 : _a.set;
+            const findElementReduxFormName = () => {
+              var _a2, _b, _c;
+              const store = window.ss && window.ss.store;
+              if (!store || !textareaName) {
+                return null;
+              }
+              const elementForms = ((_c = (_b = (_a2 = store.getState()) == null ? void 0 : _a2.form) == null ? void 0 : _b.formState) == null ? void 0 : _c.element) || {};
+              const entries = Object.entries(elementForms);
+              for (let i2 = 0; i2 < entries.length; i2++) {
+                const [formName, formState] = entries[i2];
+                const registeredFields = (formState == null ? void 0 : formState.registeredFields) || {};
+                const values = (formState == null ? void 0 : formState.values) || {};
+                if (Object.prototype.hasOwnProperty.call(registeredFields, textareaName) || Object.prototype.hasOwnProperty.call(values, textareaName)) {
+                  return formName;
+                }
+              }
+              return null;
+            };
+            const dispatchReduxFormChange = (html) => {
+              const store = window.ss && window.ss.store;
+              if (!store || !textareaName) {
+                return;
+              }
+              const formName = findElementReduxFormName();
+              if (!formName) {
+                return;
+              }
+              const reduxFormName = `element.${formName}`;
+              store.dispatch({
+                type: "@@redux-form/CHANGE",
+                meta: {
+                  form: reduxFormName,
+                  field: textareaName,
+                  touch: true,
+                  persistentSubmitErrors: false
+                },
+                payload: html
+              });
+            };
+            const syncEditorToTextarea = (editorInstance) => {
+              const html = editorInstance.getHTML();
+              if (textareaElement) {
+                if (textareaValueSetter) {
+                  textareaValueSetter.call(textareaElement, html);
+                } else {
+                  textareaElement.value = html;
+                }
+              }
+              this.val(html);
+              dispatchReduxFormChange(html);
+            };
             const extensions = [
               StarterKit.configure({
                 // Configure specific extensions within StarterKit
@@ -22732,9 +22789,9 @@ img.ProseMirror-separator {
               Superscript,
               TextStyle.extend({
                 addAttributes() {
-                  var _a;
+                  var _a2;
                   return {
-                    ...((_a = this.parent) == null ? void 0 : _a.call(this)) || {},
+                    ...((_a2 = this.parent) == null ? void 0 : _a2.call(this)) || {},
                     class: {
                       default: null,
                       parseHTML: (element) => element.getAttribute("class"),
@@ -22761,9 +22818,7 @@ img.ProseMirror-separator {
               content: initialContent,
               autofocus: config.autofocus || false,
               onUpdate: ({ editor: editor2 }) => {
-                const html = editor2.getHTML();
-                this.val(html);
-                this.trigger("change");
+                syncEditorToTextarea(editor2);
               },
               onCreate: ({ editor: editor2 }) => {
                 if (config.toolbar !== false) {
@@ -22771,11 +22826,16 @@ img.ProseMirror-separator {
                 }
                 const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`)[0];
                 if (proseMirrorElement) {
-                  proseMirrorElement.addEventListener("focus", () => {
-                    wrapper.addClass(CONSTANTS.CSS_CLASSES.FOCUSED);
-                  });
-                  proseMirrorElement.addEventListener("blur", () => {
-                    wrapper.removeClass(CONSTANTS.CSS_CLASSES.FOCUSED);
+                  const handleElementalToggleKeys = (event) => {
+                    if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+                      event.stopPropagation();
+                    }
+                  };
+                  proseMirrorElement.addEventListener("keydown", handleElementalToggleKeys);
+                  proseMirrorElement.addEventListener("keyup", handleElementalToggleKeys);
+                  wrapper.data("tiptap-elemental-guard", {
+                    proseMirrorElement,
+                    handleElementalToggleKeys
                   });
                 }
                 if (screenfull$1.isEnabled) {
@@ -22790,6 +22850,12 @@ img.ProseMirror-separator {
                 }
               },
               onDestroy: () => {
+                const guard = wrapper.data("tiptap-elemental-guard");
+                if (guard && guard.proseMirrorElement) {
+                  guard.proseMirrorElement.removeEventListener("keydown", guard.handleElementalToggleKeys);
+                  guard.proseMirrorElement.removeEventListener("keyup", guard.handleElementalToggleKeys);
+                  wrapper.removeData("tiptap-elemental-guard");
+                }
               }
             });
             this.addKeyboardShortcuts(wrapper, editor);

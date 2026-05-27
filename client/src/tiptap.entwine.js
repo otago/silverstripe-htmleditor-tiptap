@@ -31,7 +31,6 @@ import screenfull from 'screenfull';
     CSS_CLASSES: {
       WRAPPER: 'tiptap-wrapper',
       TOOLBAR: 'tiptap-toolbar',
-      FOCUSED: 'editor-focused',
       FULLSCREEN: 'tiptap-fullscreen',
       HTML_SOURCE: 'html-source-mode',
       HTML_TEXTAREA: 'tiptap-html-source',
@@ -97,6 +96,77 @@ import screenfull from 'screenfull';
           this.after(wrapper);
           this.hide();
 
+          // below is the event to trigger the redux form, for the elmental forms.
+          const textareaElement = this[0];
+          const textareaName = this.attr('name') || '';
+          const textareaValueSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLTextAreaElement.prototype,
+            'value'
+          )?.set;
+
+          const findElementReduxFormName = () => {
+            const store = window.ss && window.ss.store;
+            if (!store || !textareaName) {
+              return null;
+            }
+
+            const elementForms = store.getState()?.form?.formState?.element || {};
+            const entries = Object.entries(elementForms);
+
+            for (let i = 0; i < entries.length; i++) {
+              const [formName, formState] = entries[i];
+              const registeredFields = formState?.registeredFields || {};
+              const values = formState?.values || {};
+              if (
+                Object.prototype.hasOwnProperty.call(registeredFields, textareaName)
+                || Object.prototype.hasOwnProperty.call(values, textareaName)
+              ) {
+                return formName;
+              }
+            }
+
+            return null;
+          };
+
+          const dispatchReduxFormChange = (html) => {
+            const store = window.ss && window.ss.store;
+            if (!store || !textareaName) {
+              return;
+            }
+
+            const formName = findElementReduxFormName();
+            if (!formName) {
+              return;
+            }
+
+            const reduxFormName = `element.${formName}`;
+            store.dispatch({
+              type: '@@redux-form/CHANGE',
+              meta: {
+                form: reduxFormName,
+                field: textareaName,
+                touch: true,
+                persistentSubmitErrors: false,
+              },
+              payload: html,
+            });
+          };
+
+          const syncEditorToTextarea = (editorInstance) => {
+            const html = editorInstance.getHTML();
+
+            if (textareaElement) {
+              if (textareaValueSetter) {
+                textareaValueSetter.call(textareaElement, html);
+              } else {
+                textareaElement.value = html;
+              }
+            }
+
+            this.val(html);
+            dispatchReduxFormChange(html);
+          };
+
           // Configure all available extensions
           const extensions = [
             StarterKit.configure({
@@ -159,12 +229,7 @@ import screenfull from 'screenfull';
             content: initialContent,
             autofocus: config.autofocus || false,
             onUpdate: ({ editor }) => {
-              // Sync content back to textarea
-              const html = editor.getHTML();
-              this.val(html);
-
-              // Trigger change event for SilverStripe form handling
-              this.trigger('change');
+              syncEditorToTextarea(editor);
             },
             onCreate: ({ editor }) => {
 
@@ -176,12 +241,19 @@ import screenfull from 'screenfull';
               // Add focus/blur handlers for toolbar styling
               const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`)[0];
               if (proseMirrorElement) {
-                proseMirrorElement.addEventListener('focus', () => {
-                  wrapper.addClass(CONSTANTS.CSS_CLASSES.FOCUSED);
-                });
+                const handleElementalToggleKeys = (event) => {
+                  // Prevent Enter/Space from bubbling to Elemental's expand/collapse handlers.
+                  if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+                    event.stopPropagation();
+                  }
+                };
 
-                proseMirrorElement.addEventListener('blur', () => {
-                  wrapper.removeClass(CONSTANTS.CSS_CLASSES.FOCUSED);
+                proseMirrorElement.addEventListener('keydown', handleElementalToggleKeys);
+                proseMirrorElement.addEventListener('keyup', handleElementalToggleKeys);
+
+                wrapper.data('tiptap-elemental-guard', {
+                  proseMirrorElement,
+                  handleElementalToggleKeys,
                 });
               }
 
@@ -200,6 +272,12 @@ import screenfull from 'screenfull';
               }
             },
             onDestroy: () => {
+              const guard = wrapper.data('tiptap-elemental-guard');
+              if (guard && guard.proseMirrorElement) {
+                guard.proseMirrorElement.removeEventListener('keydown', guard.handleElementalToggleKeys);
+                guard.proseMirrorElement.removeEventListener('keyup', guard.handleElementalToggleKeys);
+                wrapper.removeData('tiptap-elemental-guard');
+              }
             }
           });
 
