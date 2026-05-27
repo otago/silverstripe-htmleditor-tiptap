@@ -100,3 +100,8 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorField:
     
     # Editor settings
     autofocus: false
+
+SilverStripe\Forms\HTMLEditor\HTMLEditorConfig:
+  default_element_rules:
+    mark: true
+    s: true
