@@ -712,7 +712,7 @@ for the lists dropdown
   line-height: 1.6;
   color: #3c4043;
 
-  max-height: var(--tiptap-editor-max-height, calc(100dvh - 220px));
+  max-height: var(--tiptap-editor-max-height, calc(100dvh - 320px));
   overflow: auto;
 }
 

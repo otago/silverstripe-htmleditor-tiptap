@@ -22724,6 +22724,43 @@ img.ProseMirror-separator {
           "track",
           "wbr"
         ]);
+        const blockElements = /* @__PURE__ */ new Set([
+          "article",
+          "aside",
+          "blockquote",
+          "div",
+          "dl",
+          "dt",
+          "dd",
+          "fieldset",
+          "figure",
+          "figcaption",
+          "footer",
+          "form",
+          "h1",
+          "h2",
+          "h3",
+          "h4",
+          "h5",
+          "h6",
+          "header",
+          "hr",
+          "li",
+          "main",
+          "nav",
+          "ol",
+          "p",
+          "pre",
+          "section",
+          "table",
+          "tbody",
+          "td",
+          "tfoot",
+          "th",
+          "thead",
+          "tr",
+          "ul"
+        ]);
         const preserveWhitespace = /* @__PURE__ */ new Set(["pre", "code", "textarea"]);
         const indentUnit = "  ";
         const container = document.createElement("div");
@@ -22759,19 +22796,60 @@ img.ProseMirror-separator {
           }
           const childNodes = Array.from(node.childNodes || []);
           const nextPreserveText = preserveText || preserveWhitespace.has(tag);
-          const hasElementChildren = childNodes.some((child) => child.nodeType === Node.ELEMENT_NODE);
-          if (!hasElementChildren && !nextPreserveText) {
-            const textContent = (node.textContent || "").replace(/\s+/g, " ").trim();
-            if (!textContent) {
+          const isBlockElement = blockElements.has(tag);
+          const hasBlockChildren = childNodes.some(
+            (child) => child.nodeType === Node.ELEMENT_NODE && blockElements.has(child.tagName.toLowerCase())
+          );
+          if (!isBlockElement) {
+            const inlineContent = childNodes.map((child) => {
+              if (child.nodeType === Node.TEXT_NODE) {
+                const rawText = child.textContent || "";
+                return nextPreserveText ? rawText : rawText.replace(/\s+/g, " ").trim();
+              }
+              return formatNode(child, 0, nextPreserveText).trim();
+            }).filter(Boolean).join("");
+            if (!inlineContent) {
               return `${indent}<${tag}${attrs}></${tag}>
 `;
             }
-            return `${indent}<${tag}${attrs}>${textContent}</${tag}>
+            return `${indent}<${tag}${attrs}>${inlineContent}</${tag}>
+`;
+          }
+          if (!hasBlockChildren) {
+            const inlineContent = childNodes.map((child) => {
+              if (child.nodeType === Node.TEXT_NODE) {
+                const rawText = child.textContent || "";
+                return nextPreserveText ? rawText : rawText.replace(/\s+/g, " ").trim();
+              }
+              return formatNode(child, 0, nextPreserveText).trim();
+            }).filter(Boolean).join("");
+            if (!inlineContent) {
+              return `${indent}<${tag}${attrs}></${tag}>
+`;
+            }
+            return `${indent}<${tag}${attrs}>${inlineContent}</${tag}>
 `;
           }
           let output = `${indent}<${tag}${attrs}>
 `;
           childNodes.forEach((child) => {
+            if (child.nodeType === Node.TEXT_NODE) {
+              const rawText = child.textContent || "";
+              const text = nextPreserveText ? rawText : rawText.replace(/\s+/g, " ").trim();
+              if (text) {
+                output += `${indentUnit.repeat(depth + 1)}${text}
+`;
+              }
+              return;
+            }
+            if (child.nodeType === Node.ELEMENT_NODE && !blockElements.has(child.tagName.toLowerCase())) {
+              const inlineChild = formatNode(child, 0, nextPreserveText).trim();
+              if (inlineChild) {
+                output += `${indentUnit.repeat(depth + 1)}${inlineChild}
+`;
+              }
+              return;
+            }
             output += formatNode(child, depth + 1, nextPreserveText);
           });
           output += `${indent}</${tag}>
