@@ -22974,6 +22974,21 @@ img.ProseMirror-separator {
               Subscript,
               Superscript,
               TextStyle.extend({
+                parseHTML() {
+                  return [
+                    {
+                      tag: "span",
+                      getAttrs: (element) => {
+                        const hasStyles = element.hasAttribute("style");
+                        const hasClasses = element.hasAttribute("class");
+                        if (!hasStyles && !hasClasses) {
+                          return false;
+                        }
+                        return {};
+                      }
+                    }
+                  ];
+                },
                 addAttributes() {
                   var _a2;
                   return {
@@ -23123,6 +23138,38 @@ img.ProseMirror-separator {
                 processStyleItem({ ...item });
               }
             });
+          }
+          if (!options.length) {
+            return [{
+              type: "group",
+              text: "Alerts",
+              isGroup: true,
+              children: [{
+                type: "style",
+                text: "Error",
+                className: "alert-error",
+                previewClass: "alert-error-preview",
+                isStyle: true
+              }, {
+                type: "style",
+                text: "Info",
+                className: "alert-info",
+                previewClass: "alert-info-preview",
+                isStyle: true
+              }, {
+                type: "style",
+                text: "Success",
+                className: "alert-success",
+                previewClass: "alert-success-preview",
+                isStyle: true
+              }]
+            }, {
+              type: "style",
+              text: "Highlight",
+              className: "text-highlight",
+              previewClass: "text-highlight-preview",
+              isStyle: true
+            }];
           }
           return options;
         },

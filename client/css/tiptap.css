@@ -448,8 +448,6 @@ for the lists dropdown
   width: 100%;
   text-align: left;
   padding: 8px 12px 8px 30px;
-  border: none;
-  background: none;
   display: block;
   font-size: 14px;
   border-radius: 5px;
@@ -638,25 +636,25 @@ for the lists dropdown
   border-color: #ffeaa7;
 }
 
-.tiptap-style-option.alert-error-preview {
+.tiptap-style-option.alert-error-preview, .alert-error {
   color: #721c24;
   background-color: #f8d7da;
   border-color: #f5c6cb;
 }
 
-.tiptap-style-option.alert-info-preview {
+.tiptap-style-option.alert-info-preview, .alert-info {
   color: #0c5460;
   background-color: #d1ecf1;
   border-color: #bee5eb;
 }
 
-.tiptap-style-option.alert-success-preview {
+.tiptap-style-option.alert-success-preview, .alert-success {
   color: #155724;
   background-color: #d4edda;
   border-color: #c3e6cb;
 }
 
-.tiptap-style-option.text-highlight-preview {
+.tiptap-style-option.text-highlight-preview, .text-highlight {
   color: #000;
   background-color: #ffeb3b;
   border-color: #ffc107;

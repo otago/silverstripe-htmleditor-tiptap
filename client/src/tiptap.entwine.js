@@ -365,6 +365,24 @@ import screenfull from 'screenfull';
             Subscript,
             Superscript,
             TextStyle.extend({
+              parseHTML() {
+                // we want to keep both styles and classes, but TextStyle by default only keeps styles, so we need to extend the parser to also keep classes. We also want to ignore empty style and class attributes, otherwise we end up with a lot of <span> elements with empty attributes.
+                return [
+                  {
+                    tag: 'span',
+                    getAttrs: element => {
+                      const hasStyles = element.hasAttribute('style');
+                      const hasClasses = element.hasAttribute('class');
+
+                      if (!hasStyles && !hasClasses) {
+                        return false;
+                      }
+
+                      return {};
+                    },
+                  },
+                ];
+              },
               addAttributes() {
                 return {
                   ...this.parent?.() || {},
@@ -554,6 +572,39 @@ import screenfull from 'screenfull';
           });
         }
 
+        // no style options? give them some example common classnames
+        if (!options.length) {
+          return [{
+            type: 'group',
+            text: 'Alerts',
+            isGroup: true,
+            children: [{
+              type: 'style',
+              text: 'Error',
+              className: 'alert-error',
+              previewClass: 'alert-error-preview',
+              isStyle: true
+            }, {
+              type: 'style',
+              text: 'Info',
+              className: 'alert-info',
+              previewClass: 'alert-info-preview',
+              isStyle: true
+            }, {
+              type: 'style',
+              text: 'Success',
+              className: 'alert-success',
+              previewClass: 'alert-success-preview',
+              isStyle: true
+            },]
+          }, {
+            type: 'style',
+            text: 'Highlight',
+            className: 'text-highlight',
+            previewClass: 'text-highlight-preview',
+            isStyle: true
+          }];
+        }
         return options;
       },
 
@@ -840,7 +891,7 @@ import screenfull from 'screenfull';
 
             // Parse tooltip to extract just the title part for button text
             const parts = this.parseTooltipText(buttontitle);
-            
+
             const itemConfig = {
               action: itemName,
               extension: itemName,
@@ -925,13 +976,13 @@ import screenfull from 'screenfull';
               ExtensionClass.init(editor, config, this);
             }
             if (typeof ExtensionClass.setCMSContext === 'function') {
-                ExtensionClass.setCMSContext(this.getCMSContext());
+              ExtensionClass.setCMSContext(this.getCMSContext());
             }
           }
         });
       },
 
- 
+
       // Add dropdown toggle functionality
       addDropdownToggle: function (button, dropdownMenu) {
         button.on('click', (e) => {
@@ -2136,10 +2187,10 @@ import screenfull from 'screenfull';
        * @param {Object} context - CMS context object
        */
       setCMSContext: function (context) {
-        
+
         // Store context on the entwine instance
         this.data('tiptap-cms-context', context);
-        
+
         // Get the editor configuration to find loaded extensions
         const config = this.data('tiptap-config');
         if (config && config.extensions) {
