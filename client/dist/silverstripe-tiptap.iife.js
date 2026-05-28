@@ -22945,22 +22945,6 @@ img.ProseMirror-separator {
                     proseMirrorElement,
                     handleElementalToggleKeys
                   });
-                  const scheduleViewportHeightUpdate = () => {
-                    if (wrapper.data("tiptap-maxheight-raf")) {
-                      return;
-                    }
-                    const rafId = window.requestAnimationFrame(() => {
-                      wrapper.removeData("tiptap-maxheight-raf");
-                      this.updateEditorViewportMaxHeight(wrapper);
-                    });
-                    wrapper.data("tiptap-maxheight-raf", rafId);
-                  };
-                  window.addEventListener("resize", scheduleViewportHeightUpdate, { passive: true });
-                  window.addEventListener("scroll", scheduleViewportHeightUpdate, { passive: true });
-                  wrapper.data("tiptap-viewport-height-sync", {
-                    scheduleViewportHeightUpdate
-                  });
-                  scheduleViewportHeightUpdate();
                 }
                 if (screenfull$1.isEnabled) {
                   const self = this;
@@ -22970,7 +22954,6 @@ img.ProseMirror-separator {
                       self.updateToolbarStates(toolbar, editor2);
                     }
                     wrapper.toggleClass(CONSTANTS.CSS_CLASSES.FULLSCREEN, screenfull$1.isFullscreen);
-                    self.updateEditorViewportMaxHeight(wrapper);
                   });
                 }
               },
@@ -22980,17 +22963,6 @@ img.ProseMirror-separator {
                   guard.proseMirrorElement.removeEventListener("keydown", guard.handleElementalToggleKeys);
                   guard.proseMirrorElement.removeEventListener("keyup", guard.handleElementalToggleKeys);
                   wrapper.removeData("tiptap-elemental-guard");
-                }
-                const viewportHeightSync = wrapper.data("tiptap-viewport-height-sync");
-                if (viewportHeightSync && viewportHeightSync.scheduleViewportHeightUpdate) {
-                  window.removeEventListener("resize", viewportHeightSync.scheduleViewportHeightUpdate);
-                  window.removeEventListener("scroll", viewportHeightSync.scheduleViewportHeightUpdate);
-                  wrapper.removeData("tiptap-viewport-height-sync");
-                }
-                const pendingRafId = wrapper.data("tiptap-maxheight-raf");
-                if (pendingRafId) {
-                  window.cancelAnimationFrame(pendingRafId);
-                  wrapper.removeData("tiptap-maxheight-raf");
                 }
               }
             });
@@ -24348,26 +24320,6 @@ img.ProseMirror-separator {
           if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
             window.scrollTo(scrollX, scrollY);
           }
-        },
-        // Fit editor body to remaining viewport space while keeping a usable minimum.
-        updateEditorViewportMaxHeight: function(wrapper) {
-          if (!wrapper || !wrapper.length) {
-            return;
-          }
-          if (wrapper.hasClass(CONSTANTS.CSS_CLASSES.FULLSCREEN)) {
-            wrapper[0].style.removeProperty("--tiptap-editor-max-height");
-            return;
-          }
-          const proseMirror = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`)[0];
-          if (!proseMirror) {
-            return;
-          }
-          const editorTop = proseMirror.getBoundingClientRect().top;
-          const viewportPadding = 24;
-          const minimumHeight = 200;
-          const availableHeight = Math.floor(window.innerHeight - editorTop - viewportPadding);
-          const maxHeight = Math.max(minimumHeight, availableHeight);
-          wrapper[0].style.setProperty("--tiptap-editor-max-height", `${maxHeight}px`);
         },
         /**
          * Set CMS context for all extensions
