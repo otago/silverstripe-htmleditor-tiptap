@@ -66,6 +66,116 @@ import screenfull from 'screenfull';
     }
   };
 
+  class HtmlSourceModeHelper {
+    attachKeyGuard(wrapper, htmlTextarea) {
+      const htmlSourceElement = htmlTextarea[0];
+      const handleHtmlSourceKeyEvent = (event) => {
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') {
+          event.stopImmediatePropagation();
+        }
+      };
+
+      ['keydown', 'keyup', 'keypress', 'input'].forEach((type) => {
+        htmlSourceElement.addEventListener(type, handleHtmlSourceKeyEvent, true);
+      });
+
+      wrapper.data('html-source-key-guard', {
+        element: htmlSourceElement,
+        handler: handleHtmlSourceKeyEvent,
+      });
+    }
+
+    detachKeyGuard(wrapper) {
+      const htmlSourceKeyGuard = wrapper.data('html-source-key-guard');
+      if (htmlSourceKeyGuard && htmlSourceKeyGuard.element && htmlSourceKeyGuard.handler) {
+        ['keydown', 'keyup', 'keypress', 'input'].forEach((type) => {
+          htmlSourceKeyGuard.element.removeEventListener(type, htmlSourceKeyGuard.handler, true);
+        });
+      }
+      wrapper.removeData('html-source-key-guard');
+    }
+
+    formatHtmlForSourceView(html) {
+      if (!html || typeof html !== 'string') {
+        return '';
+      }
+
+      const voidElements = new Set([
+        'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+        'link', 'meta', 'param', 'source', 'track', 'wbr'
+      ]);
+      const preserveWhitespace = new Set(['pre', 'code', 'textarea']);
+      const indentUnit = '  ';
+      const container = document.createElement('div');
+      container.innerHTML = html;
+
+      const formatAttributes = (element) => {
+        if (!element.attributes || !element.attributes.length) {
+          return '';
+        }
+
+        const attrs = [];
+        for (let i = 0; i < element.attributes.length; i++) {
+          const attribute = element.attributes[i];
+          const value = String(attribute.value).replace(/"/g, '&quot;');
+          attrs.push(`${attribute.name}="${value}"`);
+        }
+
+        return attrs.length ? ` ${attrs.join(' ')}` : '';
+      };
+
+      const formatNode = (node, depth, preserveText) => {
+        const indent = indentUnit.repeat(depth);
+
+        if (node.nodeType === Node.TEXT_NODE) {
+          const rawText = node.textContent || '';
+          const text = preserveText ? rawText : rawText.replace(/\s+/g, ' ').trim();
+          return text ? `${indent}${text}\n` : '';
+        }
+
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+          return '';
+        }
+
+        const tag = node.tagName.toLowerCase();
+        const attrs = formatAttributes(node);
+
+        if (voidElements.has(tag)) {
+          return `${indent}<${tag}${attrs}>\n`;
+        }
+
+        const childNodes = Array.from(node.childNodes || []);
+        const nextPreserveText = preserveText || preserveWhitespace.has(tag);
+        const hasElementChildren = childNodes.some((child) => child.nodeType === Node.ELEMENT_NODE);
+
+        if (!hasElementChildren && !nextPreserveText) {
+          const textContent = (node.textContent || '').replace(/\s+/g, ' ').trim();
+          if (!textContent) {
+            return `${indent}<${tag}${attrs}></${tag}>\n`;
+          }
+          return `${indent}<${tag}${attrs}>${textContent}</${tag}>\n`;
+        }
+
+        let output = `${indent}<${tag}${attrs}>\n`;
+        childNodes.forEach((child) => {
+          output += formatNode(child, depth + 1, nextPreserveText);
+        });
+        output += `${indent}</${tag}>\n`;
+        return output;
+      };
+
+      let formatted = '';
+      Array.from(container.childNodes || []).forEach((child) => {
+        formatted += formatNode(child, 0, false);
+      });
+
+      return formatted.trim() || html;
+    }
+  }
+
+  const htmlSourceModeHelper = new HtmlSourceModeHelper();
+
   $.entwine('ss', function ($) {
     $('textarea.htmleditor').entwine({
       onmatch: function () {
@@ -1806,10 +1916,11 @@ import screenfull from 'screenfull';
       enterHtmlSource: function (editor, wrapper) {
         const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`);
         const currentHtml = editor.getHTML();
+        const formattedHtml = htmlSourceModeHelper.formatHtmlForSourceView(currentHtml);
 
         // Create textarea for HTML editing
         const htmlTextarea = $(`<textarea class="${CONSTANTS.CSS_CLASSES.HTML_TEXTAREA}"></textarea>`);
-        htmlTextarea.val(currentHtml);
+        htmlTextarea.val(formattedHtml);
 
         // Hide the ProseMirror editor
         proseMirrorElement.hide();
@@ -1828,22 +1939,30 @@ import screenfull from 'screenfull';
           this.autoResizeTextarea(htmlTextarea);
         });
 
+        // Prevent parent Elemental/global key handlers from hijacking focus while editing source.
+        htmlSourceModeHelper.attachKeyGuard(wrapper, htmlTextarea);
+
         // Focus the textarea
         htmlTextarea.focus();
 
         // Store reference to the textarea
         wrapper.data('html-textarea', htmlTextarea);
+        wrapper.data('html-source-original', currentHtml);
+        wrapper.data('html-source-formatted', formattedHtml);
       },
 
       // Exit HTML source mode
       exitHtmlSource: function (editor, wrapper) {
         const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`);
         const htmlTextarea = wrapper.data('html-textarea');
+        const originalHtml = wrapper.data('html-source-original');
+        const formattedOriginalHtml = wrapper.data('html-source-formatted');
 
         if (htmlTextarea) {
           // Get the HTML content from textarea
           const htmlContent = htmlTextarea.val();
-          const normalizedHtmlContent = this.normalizeContentForTiptap(htmlContent);
+          const sourceHtml = htmlContent === formattedOriginalHtml ? (originalHtml || htmlContent) : htmlContent;
+          const normalizedHtmlContent = this.normalizeContentForTiptap(sourceHtml);
 
           // Update the editor with the new HTML
           editor.commands.setContent(normalizedHtmlContent);
@@ -1852,6 +1971,11 @@ import screenfull from 'screenfull';
           htmlTextarea.remove();
           wrapper.removeData('html-textarea');
         }
+
+        htmlSourceModeHelper.detachKeyGuard(wrapper);
+
+        wrapper.removeData('html-source-original');
+        wrapper.removeData('html-source-formatted');
 
         // Show the ProseMirror editor
         proseMirrorElement.show();
@@ -1919,6 +2043,8 @@ import screenfull from 'screenfull';
         const element = textarea[0];
         const minHeight = 200; // Minimum height in pixels
         const maxHeight = Math.max(window.innerHeight * 0.6, 400); // Maximum height (60% of viewport, min 400px)
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
 
         // Reset height to get accurate scrollHeight
         element.style.height = '0px';
@@ -1926,7 +2052,6 @@ import screenfull from 'screenfull';
 
         // Get the scroll height (actual content height)
         const scrollHeight = element.scrollHeight;
-
         // Calculate the final height
         let finalHeight = Math.max(scrollHeight, minHeight);
         finalHeight = Math.min(finalHeight, maxHeight);
@@ -1939,6 +2064,11 @@ import screenfull from 'screenfull';
           element.style.overflowY = 'auto';
         } else {
           element.style.overflowY = 'hidden';
+        }
+
+        // Keep viewport stable in case browser auto-scrolls during resize.
+        if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
+          window.scrollTo(scrollX, scrollY);
         }
       },
 

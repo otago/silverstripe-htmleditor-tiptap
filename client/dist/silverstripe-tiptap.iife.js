@@ -1144,7 +1144,7 @@
     }
   }
   const emptyAttrs = /* @__PURE__ */ Object.create(null);
-  let Node$1 = class Node2 {
+  let Node$2 = class Node2 {
     /**
     @internal
     */
@@ -1545,8 +1545,8 @@
       return node;
     }
   };
-  Node$1.prototype.text = void 0;
-  class TextNode extends Node$1 {
+  Node$2.prototype.text = void 0;
+  class TextNode extends Node$2 {
     /**
     @internal
     */
@@ -2133,7 +2133,7 @@
     create(attrs = null, content, marks) {
       if (this.isText)
         throw new Error("NodeType.create can't construct text nodes");
-      return new Node$1(this, this.computeAttrs(attrs), Fragment.from(content), Mark$1.setFrom(marks));
+      return new Node$2(this, this.computeAttrs(attrs), Fragment.from(content), Mark$1.setFrom(marks));
     }
     /**
     Like [`create`](https://prosemirror.net/docs/ref/#model.NodeType.create), but check the given content
@@ -2143,7 +2143,7 @@
     createChecked(attrs = null, content, marks) {
       content = Fragment.from(content);
       this.checkContent(content);
-      return new Node$1(this, this.computeAttrs(attrs), content, Mark$1.setFrom(marks));
+      return new Node$2(this, this.computeAttrs(attrs), content, Mark$1.setFrom(marks));
     }
     /**
     Like [`create`](https://prosemirror.net/docs/ref/#model.NodeType.create), but see if it is
@@ -2166,7 +2166,7 @@
       let after = matched && matched.fillBefore(Fragment.empty, true);
       if (!after)
         return null;
-      return new Node$1(this, attrs, content.append(after), Mark$1.setFrom(marks));
+      return new Node$2(this, attrs, content.append(after), Mark$1.setFrom(marks));
     }
     /**
     Returns true if the given fragment is valid content for this node
@@ -2362,7 +2362,7 @@
         let type = this.marks[prop], excl = type.spec.excludes;
         type.excluded = excl == null ? [type] : excl == "" ? [] : gatherMarks(this, excl.split(" "));
       }
-      this.nodeFromJSON = (json) => Node$1.fromJSON(this, json);
+      this.nodeFromJSON = (json) => Node$2.fromJSON(this, json);
       this.markFromJSON = (json) => Mark$1.fromJSON(this, json);
       this.topNodeType = this.nodes[this.spec.topNode || "doc"];
       this.cached.wrappings = /* @__PURE__ */ Object.create(null);
@@ -5951,7 +5951,7 @@
       let instance = new EditorState($config);
       $config.fields.forEach((field) => {
         if (field.name == "doc") {
-          instance.doc = Node$1.fromJSON(config.schema, json.doc);
+          instance.doc = Node$2.fromJSON(config.schema, json.doc);
         } else if (field.name == "selection") {
           instance.selection = Selection.fromJSON(instance.doc, json.selection);
         } else if (field.name == "storedMarks") {
@@ -13661,7 +13661,7 @@
     return removeWhitespaces(html);
   }
   function createNodeFromContent(content, schema, options) {
-    if (content instanceof Node$1 || content instanceof Fragment) {
+    if (content instanceof Node$2 || content instanceof Fragment) {
       return content;
     }
     options = {
@@ -16023,7 +16023,7 @@ img.ProseMirror-separator {
       }
     });
   }
-  class Node {
+  let Node$1 = class Node2 {
     constructor(config = {}) {
       this.type = "node";
       this.name = "node";
@@ -16053,7 +16053,7 @@ img.ProseMirror-separator {
       })) || {};
     }
     static create(config = {}) {
-      return new Node(config);
+      return new Node2(config);
     }
     configure(options = {}) {
       const extension = this.extend({
@@ -16067,7 +16067,7 @@ img.ProseMirror-separator {
       return extension;
     }
     extend(extendedConfig = {}) {
-      const extension = new Node(extendedConfig);
+      const extension = new Node2(extendedConfig);
       extension.parent = this;
       this.child = extension;
       extension.name = extendedConfig.name ? extendedConfig.name : extension.parent.name;
@@ -16083,7 +16083,7 @@ img.ProseMirror-separator {
       }));
       return extension;
     }
-  }
+  };
   function markPasteRule(config) {
     return new PasteRule({
       find: config.find,
@@ -16141,7 +16141,7 @@ img.ProseMirror-separator {
     return false;
   }
   const inputRegex$6 = /^\s*>\s$/;
-  const Blockquote = Node.create({
+  const Blockquote = Node$1.create({
     name: "blockquote",
     addOptions() {
       return {
@@ -16266,7 +16266,7 @@ img.ProseMirror-separator {
   const ListItemName$1 = "listItem";
   const TextStyleName$1 = "textStyle";
   const inputRegex$5 = /^\s*([-+*])\s$/;
-  const BulletList = Node.create({
+  const BulletList = Node$1.create({
     name: "bulletList",
     addOptions() {
       return {
@@ -16382,7 +16382,7 @@ img.ProseMirror-separator {
   });
   const backtickInputRegex = /^```([a-z]+)?[\s\n]$/;
   const tildeInputRegex = /^~~~([a-z]+)?[\s\n]$/;
-  const CodeBlock = Node.create({
+  const CodeBlock = Node$1.create({
     name: "codeBlock",
     addOptions() {
       return {
@@ -16568,7 +16568,7 @@ img.ProseMirror-separator {
       ];
     }
   });
-  const Document = Node.create({
+  const Document = Node$1.create({
     name: "doc",
     topNode: true,
     content: "block+"
@@ -16947,7 +16947,7 @@ img.ProseMirror-separator {
       };
     }
   });
-  const HardBreak = Node.create({
+  const HardBreak = Node$1.create({
     name: "hardBreak",
     addOptions() {
       return {
@@ -17002,7 +17002,7 @@ img.ProseMirror-separator {
       };
     }
   });
-  const Heading = Node.create({
+  const Heading = Node$1.create({
     name: "heading",
     addOptions() {
       return {
@@ -17630,7 +17630,7 @@ img.ProseMirror-separator {
       };
     }
   });
-  const HorizontalRule = Node.create({
+  const HorizontalRule = Node$1.create({
     name: "horizontalRule",
     addOptions() {
       return {
@@ -17779,7 +17779,7 @@ img.ProseMirror-separator {
       ];
     }
   });
-  const ListItem = Node.create({
+  const ListItem = Node$1.create({
     name: "listItem",
     addOptions() {
       return {
@@ -17811,7 +17811,7 @@ img.ProseMirror-separator {
   const ListItemName = "listItem";
   const TextStyleName = "textStyle";
   const inputRegex$3 = /^(\d+)\.\s$/;
-  const OrderedList = Node.create({
+  const OrderedList = Node$1.create({
     name: "orderedList",
     addOptions() {
       return {
@@ -17888,7 +17888,7 @@ img.ProseMirror-separator {
       ];
     }
   });
-  const Paragraph = Node.create({
+  const Paragraph = Node$1.create({
     name: "paragraph",
     priority: 1e3,
     addOptions() {
@@ -17984,7 +17984,7 @@ img.ProseMirror-separator {
       ];
     }
   });
-  const Text$1 = Node.create({
+  const Text$1 = Node$1.create({
     name: "text",
     group: "inline"
   });
@@ -18092,7 +18092,7 @@ img.ProseMirror-separator {
     }
   });
   const inputRegex$1 = /(?:^|\s)(!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\))$/;
-  const Image = Node.create({
+  const Image = Node$1.create({
     name: "image",
     addOptions() {
       return {
@@ -22249,7 +22249,7 @@ img.ProseMirror-separator {
     editor.commands.deleteTable();
     return true;
   };
-  const Table = Node.create({
+  const Table = Node$1.create({
     name: "table",
     // @ts-ignore
     addOptions() {
@@ -22405,7 +22405,7 @@ img.ProseMirror-separator {
       };
     }
   });
-  const TableRow = Node.create({
+  const TableRow = Node$1.create({
     name: "tableRow",
     addOptions() {
       return {
@@ -22423,7 +22423,7 @@ img.ProseMirror-separator {
       return ["tr", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
     }
   });
-  const TableHeader = Node.create({
+  const TableHeader = Node$1.create({
     name: "tableHeader",
     addOptions() {
       return {
@@ -22460,7 +22460,7 @@ img.ProseMirror-separator {
       return ["th", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
     }
   });
-  const TableCell = Node.create({
+  const TableCell = Node$1.create({
     name: "tableCell",
     addOptions() {
       return {
@@ -22678,6 +22678,114 @@ img.ProseMirror-separator {
         NO_CONFIG: "TipTap: No config provided. Make sure TipTapFieldExtension is properly configured."
       }
     };
+    class HtmlSourceModeHelper {
+      attachKeyGuard(wrapper, htmlTextarea) {
+        const htmlSourceElement = htmlTextarea[0];
+        const handleHtmlSourceKeyEvent = (event) => {
+          event.stopPropagation();
+          if (typeof event.stopImmediatePropagation === "function") {
+            event.stopImmediatePropagation();
+          }
+        };
+        ["keydown", "keyup", "keypress", "input"].forEach((type) => {
+          htmlSourceElement.addEventListener(type, handleHtmlSourceKeyEvent, true);
+        });
+        wrapper.data("html-source-key-guard", {
+          element: htmlSourceElement,
+          handler: handleHtmlSourceKeyEvent
+        });
+      }
+      detachKeyGuard(wrapper) {
+        const htmlSourceKeyGuard = wrapper.data("html-source-key-guard");
+        if (htmlSourceKeyGuard && htmlSourceKeyGuard.element && htmlSourceKeyGuard.handler) {
+          ["keydown", "keyup", "keypress", "input"].forEach((type) => {
+            htmlSourceKeyGuard.element.removeEventListener(type, htmlSourceKeyGuard.handler, true);
+          });
+        }
+        wrapper.removeData("html-source-key-guard");
+      }
+      formatHtmlForSourceView(html) {
+        if (!html || typeof html !== "string") {
+          return "";
+        }
+        const voidElements = /* @__PURE__ */ new Set([
+          "area",
+          "base",
+          "br",
+          "col",
+          "embed",
+          "hr",
+          "img",
+          "input",
+          "link",
+          "meta",
+          "param",
+          "source",
+          "track",
+          "wbr"
+        ]);
+        const preserveWhitespace = /* @__PURE__ */ new Set(["pre", "code", "textarea"]);
+        const indentUnit = "  ";
+        const container = document.createElement("div");
+        container.innerHTML = html;
+        const formatAttributes = (element) => {
+          if (!element.attributes || !element.attributes.length) {
+            return "";
+          }
+          const attrs = [];
+          for (let i2 = 0; i2 < element.attributes.length; i2++) {
+            const attribute = element.attributes[i2];
+            const value = String(attribute.value).replace(/"/g, "&quot;");
+            attrs.push(`${attribute.name}="${value}"`);
+          }
+          return attrs.length ? ` ${attrs.join(" ")}` : "";
+        };
+        const formatNode = (node, depth, preserveText) => {
+          const indent = indentUnit.repeat(depth);
+          if (node.nodeType === Node.TEXT_NODE) {
+            const rawText = node.textContent || "";
+            const text = preserveText ? rawText : rawText.replace(/\s+/g, " ").trim();
+            return text ? `${indent}${text}
+` : "";
+          }
+          if (node.nodeType !== Node.ELEMENT_NODE) {
+            return "";
+          }
+          const tag = node.tagName.toLowerCase();
+          const attrs = formatAttributes(node);
+          if (voidElements.has(tag)) {
+            return `${indent}<${tag}${attrs}>
+`;
+          }
+          const childNodes = Array.from(node.childNodes || []);
+          const nextPreserveText = preserveText || preserveWhitespace.has(tag);
+          const hasElementChildren = childNodes.some((child) => child.nodeType === Node.ELEMENT_NODE);
+          if (!hasElementChildren && !nextPreserveText) {
+            const textContent = (node.textContent || "").replace(/\s+/g, " ").trim();
+            if (!textContent) {
+              return `${indent}<${tag}${attrs}></${tag}>
+`;
+            }
+            return `${indent}<${tag}${attrs}>${textContent}</${tag}>
+`;
+          }
+          let output = `${indent}<${tag}${attrs}>
+`;
+          childNodes.forEach((child) => {
+            output += formatNode(child, depth + 1, nextPreserveText);
+          });
+          output += `${indent}</${tag}>
+`;
+          return output;
+        };
+        let formatted = "";
+        Array.from(container.childNodes || []).forEach((child) => {
+          formatted += formatNode(child, 0, false);
+        });
+        return formatted.trim() || html;
+      }
+    }
+    const htmlSourceModeHelper = new HtmlSourceModeHelper();
     $.entwine("ss", function($2) {
       $2("textarea.htmleditor").entwine({
         onmatch: function() {
@@ -22837,6 +22945,22 @@ img.ProseMirror-separator {
                     proseMirrorElement,
                     handleElementalToggleKeys
                   });
+                  const scheduleViewportHeightUpdate = () => {
+                    if (wrapper.data("tiptap-maxheight-raf")) {
+                      return;
+                    }
+                    const rafId = window.requestAnimationFrame(() => {
+                      wrapper.removeData("tiptap-maxheight-raf");
+                      this.updateEditorViewportMaxHeight(wrapper);
+                    });
+                    wrapper.data("tiptap-maxheight-raf", rafId);
+                  };
+                  window.addEventListener("resize", scheduleViewportHeightUpdate, { passive: true });
+                  window.addEventListener("scroll", scheduleViewportHeightUpdate, { passive: true });
+                  wrapper.data("tiptap-viewport-height-sync", {
+                    scheduleViewportHeightUpdate
+                  });
+                  scheduleViewportHeightUpdate();
                 }
                 if (screenfull$1.isEnabled) {
                   const self = this;
@@ -22846,6 +22970,7 @@ img.ProseMirror-separator {
                       self.updateToolbarStates(toolbar, editor2);
                     }
                     wrapper.toggleClass(CONSTANTS.CSS_CLASSES.FULLSCREEN, screenfull$1.isFullscreen);
+                    self.updateEditorViewportMaxHeight(wrapper);
                   });
                 }
               },
@@ -22855,6 +22980,17 @@ img.ProseMirror-separator {
                   guard.proseMirrorElement.removeEventListener("keydown", guard.handleElementalToggleKeys);
                   guard.proseMirrorElement.removeEventListener("keyup", guard.handleElementalToggleKeys);
                   wrapper.removeData("tiptap-elemental-guard");
+                }
+                const viewportHeightSync = wrapper.data("tiptap-viewport-height-sync");
+                if (viewportHeightSync && viewportHeightSync.scheduleViewportHeightUpdate) {
+                  window.removeEventListener("resize", viewportHeightSync.scheduleViewportHeightUpdate);
+                  window.removeEventListener("scroll", viewportHeightSync.scheduleViewportHeightUpdate);
+                  wrapper.removeData("tiptap-viewport-height-sync");
+                }
+                const pendingRafId = wrapper.data("tiptap-maxheight-raf");
+                if (pendingRafId) {
+                  window.cancelAnimationFrame(pendingRafId);
+                  wrapper.removeData("tiptap-maxheight-raf");
                 }
               }
             });
@@ -24109,8 +24245,9 @@ img.ProseMirror-separator {
         enterHtmlSource: function(editor, wrapper) {
           const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`);
           const currentHtml = editor.getHTML();
+          const formattedHtml = htmlSourceModeHelper.formatHtmlForSourceView(currentHtml);
           const htmlTextarea = $2(`<textarea class="${CONSTANTS.CSS_CLASSES.HTML_TEXTAREA}"></textarea>`);
-          htmlTextarea.val(currentHtml);
+          htmlTextarea.val(formattedHtml);
           proseMirrorElement.hide();
           proseMirrorElement.after(htmlTextarea);
           wrapper.addClass(CONSTANTS.CSS_CLASSES.HTML_SOURCE);
@@ -24118,20 +24255,29 @@ img.ProseMirror-separator {
           htmlTextarea.on("input", () => {
             this.autoResizeTextarea(htmlTextarea);
           });
+          htmlSourceModeHelper.attachKeyGuard(wrapper, htmlTextarea);
           htmlTextarea.focus();
           wrapper.data("html-textarea", htmlTextarea);
+          wrapper.data("html-source-original", currentHtml);
+          wrapper.data("html-source-formatted", formattedHtml);
         },
         // Exit HTML source mode
         exitHtmlSource: function(editor, wrapper) {
           const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`);
           const htmlTextarea = wrapper.data("html-textarea");
+          const originalHtml = wrapper.data("html-source-original");
+          const formattedOriginalHtml = wrapper.data("html-source-formatted");
           if (htmlTextarea) {
             const htmlContent = htmlTextarea.val();
-            const normalizedHtmlContent = this.normalizeContentForTiptap(htmlContent);
+            const sourceHtml = htmlContent === formattedOriginalHtml ? originalHtml || htmlContent : htmlContent;
+            const normalizedHtmlContent = this.normalizeContentForTiptap(sourceHtml);
             editor.commands.setContent(normalizedHtmlContent);
             htmlTextarea.remove();
             wrapper.removeData("html-textarea");
           }
+          htmlSourceModeHelper.detachKeyGuard(wrapper);
+          wrapper.removeData("html-source-original");
+          wrapper.removeData("html-source-formatted");
           proseMirrorElement.show();
           wrapper.removeClass(CONSTANTS.CSS_CLASSES.HTML_SOURCE);
           editor.commands.focus();
@@ -24186,6 +24332,8 @@ img.ProseMirror-separator {
           const element = textarea[0];
           const minHeight = 200;
           const maxHeight = Math.max(window.innerHeight * 0.6, 400);
+          const scrollX = window.scrollX;
+          const scrollY = window.scrollY;
           element.style.height = "0px";
           element.style.overflowY = "hidden";
           const scrollHeight = element.scrollHeight;
@@ -24197,6 +24345,29 @@ img.ProseMirror-separator {
           } else {
             element.style.overflowY = "hidden";
           }
+          if (window.scrollX !== scrollX || window.scrollY !== scrollY) {
+            window.scrollTo(scrollX, scrollY);
+          }
+        },
+        // Fit editor body to remaining viewport space while keeping a usable minimum.
+        updateEditorViewportMaxHeight: function(wrapper) {
+          if (!wrapper || !wrapper.length) {
+            return;
+          }
+          if (wrapper.hasClass(CONSTANTS.CSS_CLASSES.FULLSCREEN)) {
+            wrapper[0].style.removeProperty("--tiptap-editor-max-height");
+            return;
+          }
+          const proseMirror = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`)[0];
+          if (!proseMirror) {
+            return;
+          }
+          const editorTop = proseMirror.getBoundingClientRect().top;
+          const viewportPadding = 24;
+          const minimumHeight = 200;
+          const availableHeight = Math.floor(window.innerHeight - editorTop - viewportPadding);
+          const maxHeight = Math.max(minimumHeight, availableHeight);
+          wrapper[0].style.setProperty("--tiptap-editor-max-height", `${maxHeight}px`);
         },
         /**
          * Set CMS context for all extensions
