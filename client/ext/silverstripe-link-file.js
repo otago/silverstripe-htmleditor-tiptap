@@ -12,6 +12,16 @@ if (!window.TipTapExtensions) {
 }
 
 window.TipTapExtensions['ss-link-file'] = {
+    action: 'ss-link-file',
+
+    getToolbarConfig: function ({ tooltips }) {
+        return {
+            type: 'button',
+            title: (tooltips && tooltips['ss-link-file']) || 'File Link',
+            action: 'ss-link-file',
+            extension: 'custom',
+        };
+    },
 
     /**
      * Initialize the extension
@@ -39,6 +49,10 @@ window.TipTapExtensions['ss-link-file'] = {
         const selectedText = editor.state.doc.textBetween(from, to, '');
 
         this.openFileLinkDialog(editor, selectedText);
+    },
+
+    run: function ({ editor, host }) {
+        this.onClick(editor, this.config || {}, host);
     },
 
     /**

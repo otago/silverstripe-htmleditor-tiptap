@@ -11,6 +11,16 @@ if (!window.TipTapExtensions) {
 
 //const $ = window.jQuery;
 window.TipTapExtensions['ss-link-ext'] = {
+    action: 'ss-link-ext',
+
+    getToolbarConfig: function ({ tooltips }) {
+        return {
+            type: 'button',
+            title: (tooltips && tooltips['ss-link-ext']) || 'External Link',
+            action: 'ss-link-ext',
+            extension: 'custom',
+        };
+    },
 
     /**
      * Initialize the extension
@@ -38,6 +48,10 @@ window.TipTapExtensions['ss-link-ext'] = {
         const selectedText = editor.state.doc.textBetween(from, to, '');
 
         this.openExternalLinkDialog(editor, selectedText);
+    },
+
+    run: function ({ editor, host }) {
+        this.onClick(editor, this.config || {}, host);
     },
 
     /**

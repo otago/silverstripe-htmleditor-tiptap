@@ -14,6 +14,115 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import screenfull from 'screenfull';
+import alignCenter from './tools/alignCenter';
+import alignJustify from './tools/alignJustify';
+import alignLeft from './tools/alignLeft';
+import alignRight from './tools/alignRight';
+import blockquote from './tools/blockquote';
+import bold from './tools/bold';
+import bulletList from './tools/bulletList';
+import code from './tools/code';
+import codeBlock from './tools/codeBlock';
+import fullscreen from './tools/fullscreen';
+import heading1 from './tools/heading1';
+import heading2 from './tools/heading2';
+import heading3 from './tools/heading3';
+import heading4 from './tools/heading4';
+import heading5 from './tools/heading5';
+import heading6 from './tools/heading6';
+import highlight from './tools/highlight';
+import horizontalRule from './tools/horizontalRule';
+import image from './tools/image';
+import italic from './tools/italic';
+import link from './tools/link';
+import orderedList from './tools/orderedList';
+import paragraph from './tools/paragraph';
+import redo from './tools/redo';
+import styles from './tools/styles';
+import subscript from './tools/subscript';
+import superscript from './tools/superscript';
+import strikethrough from './tools/strikethrough';
+import table from './tools/table';
+import underline from './tools/underline';
+import undo from './tools/undo';
+import {
+  default as htmlSource,
+  enterHtmlSource as enterHtmlSourceTool,
+  exitHtmlSource as exitHtmlSourceTool,
+  toggleHtmlSource as toggleHtmlSourceTool,
+} from './tools/htmlSource';
+
+const TOOLS = [
+  bold,
+  italic,
+  underline,
+  strikethrough,
+  paragraph,
+  heading1,
+  heading2,
+  heading3,
+  heading4,
+  heading5,
+  heading6,
+  bulletList,
+  orderedList,
+  alignLeft,
+  alignCenter,
+  alignRight,
+  alignJustify,
+  styles,
+  blockquote,
+  horizontalRule,
+  codeBlock,
+  code,
+  highlight,
+  subscript,
+  superscript,
+  link,
+  image,
+  undo,
+  redo,
+  fullscreen,
+  htmlSource,
+  table,
+];
+
+const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => {
+  const styleClass = btn.attr('data-style-class');
+  const optionAction = btn.attr('data-option-action');
+  const parentAction = btn.attr('data-parent-action');
+
+  btn.removeClass(`${constants.CSS_CLASSES.ACTIVE} ${constants.CSS_CLASSES.DISABLED}`);
+
+  if (styleClass) {
+    btn.toggleClass(constants.CSS_CLASSES.ACTIVE, editor.isActive('textStyle', { class: styleClass }));
+    btn.toggleClass(constants.CSS_CLASSES.DISABLED, !editor.can().setMark('textStyle', { class: styleClass }));
+    return;
+  }
+
+  if (!optionAction) {
+    return;
+  }
+
+  const parentCapability = parentAction ? resolveCapability(parentAction) : null;
+  if (parentCapability) {
+    btn.toggleClass(
+      constants.CSS_CLASSES.ACTIVE,
+      parentCapability.isOptionActive({ optionAction, editor })
+    );
+    btn.toggleClass(
+      constants.CSS_CLASSES.DISABLED,
+      parentCapability.isOptionDisabled({ optionAction, editor })
+    );
+    return;
+  }
+
+  const optionCapability = resolveCapability(optionAction);
+  if (optionCapability) {
+    btn.toggleClass(constants.CSS_CLASSES.ACTIVE, optionCapability.isActive({ editor }));
+    btn.toggleClass(constants.CSS_CLASSES.DISABLED, optionCapability.isDisabled({ editor }));
+  }
+};
 
 (function ($) {
   // Configuration constants
@@ -66,174 +175,6 @@ import screenfull from 'screenfull';
     }
   };
 
-  class HtmlSourceModeHelper {
-    attachKeyGuard(wrapper, htmlTextarea) {
-      const htmlSourceElement = htmlTextarea[0];
-      const handleHtmlSourceKeyEvent = (event) => {
-        event.stopPropagation();
-        if (typeof event.stopImmediatePropagation === 'function') {
-          event.stopImmediatePropagation();
-        }
-      };
-
-      ['keydown', 'keyup', 'keypress', 'input'].forEach((type) => {
-        htmlSourceElement.addEventListener(type, handleHtmlSourceKeyEvent, true);
-      });
-
-      wrapper.data('html-source-key-guard', {
-        element: htmlSourceElement,
-        handler: handleHtmlSourceKeyEvent,
-      });
-    }
-
-    detachKeyGuard(wrapper) {
-      const htmlSourceKeyGuard = wrapper.data('html-source-key-guard');
-      if (htmlSourceKeyGuard && htmlSourceKeyGuard.element && htmlSourceKeyGuard.handler) {
-        ['keydown', 'keyup', 'keypress', 'input'].forEach((type) => {
-          htmlSourceKeyGuard.element.removeEventListener(type, htmlSourceKeyGuard.handler, true);
-        });
-      }
-      wrapper.removeData('html-source-key-guard');
-    }
-
-    formatHtmlForSourceView(html) {
-      if (!html || typeof html !== 'string') {
-        return '';
-      }
-
-      const voidElements = new Set([
-        'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-        'link', 'meta', 'param', 'source', 'track', 'wbr'
-      ]);
-      const blockElements = new Set([
-        'article', 'aside', 'blockquote', 'div', 'dl', 'dt', 'dd', 'fieldset', 'figure',
-        'figcaption', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header',
-        'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'tbody', 'td',
-        'tfoot', 'th', 'thead', 'tr', 'ul'
-      ]);
-      const preserveWhitespace = new Set(['pre', 'code', 'textarea']);
-      const indentUnit = '  ';
-      const container = document.createElement('div');
-      container.innerHTML = html;
-
-      const formatAttributes = (element) => {
-        if (!element.attributes || !element.attributes.length) {
-          return '';
-        }
-
-        const attrs = [];
-        for (let i = 0; i < element.attributes.length; i++) {
-          const attribute = element.attributes[i];
-          const value = String(attribute.value).replace(/"/g, '&quot;');
-          attrs.push(`${attribute.name}="${value}"`);
-        }
-
-        return attrs.length ? ` ${attrs.join(' ')}` : '';
-      };
-
-      const formatNode = (node, depth, preserveText) => {
-        const indent = indentUnit.repeat(depth);
-
-        if (node.nodeType === Node.TEXT_NODE) {
-          const rawText = node.textContent || '';
-          const text = preserveText ? rawText : rawText.replace(/\s+/g, ' ').trim();
-          return text ? `${indent}${text}\n` : '';
-        }
-
-        if (node.nodeType !== Node.ELEMENT_NODE) {
-          return '';
-        }
-
-        const tag = node.tagName.toLowerCase();
-        const attrs = formatAttributes(node);
-
-        if (voidElements.has(tag)) {
-          return `${indent}<${tag}${attrs}>\n`;
-        }
-
-        const childNodes = Array.from(node.childNodes || []);
-        const nextPreserveText = preserveText || preserveWhitespace.has(tag);
-        const isBlockElement = blockElements.has(tag);
-        const hasBlockChildren = childNodes.some(
-          (child) => child.nodeType === Node.ELEMENT_NODE && blockElements.has(child.tagName.toLowerCase())
-        );
-
-        if (!isBlockElement) {
-          const inlineContent = childNodes
-            .map((child) => {
-              if (child.nodeType === Node.TEXT_NODE) {
-                const rawText = child.textContent || '';
-                return nextPreserveText ? rawText : rawText.replace(/\s+/g, ' ').trim();
-              }
-
-              return formatNode(child, 0, nextPreserveText).trim();
-            })
-            .filter(Boolean)
-            .join('');
-
-          if (!inlineContent) {
-            return `${indent}<${tag}${attrs}></${tag}>\n`;
-          }
-
-          return `${indent}<${tag}${attrs}>${inlineContent}</${tag}>\n`;
-        }
-
-        if (!hasBlockChildren) {
-          const inlineContent = childNodes
-            .map((child) => {
-              if (child.nodeType === Node.TEXT_NODE) {
-                const rawText = child.textContent || '';
-                return nextPreserveText ? rawText : rawText.replace(/\s+/g, ' ').trim();
-              }
-
-              return formatNode(child, 0, nextPreserveText).trim();
-            })
-            .filter(Boolean)
-            .join('');
-
-          if (!inlineContent) {
-            return `${indent}<${tag}${attrs}></${tag}>\n`;
-          }
-
-          return `${indent}<${tag}${attrs}>${inlineContent}</${tag}>\n`;
-        }
-
-        let output = `${indent}<${tag}${attrs}>\n`;
-        childNodes.forEach((child) => {
-          if (child.nodeType === Node.TEXT_NODE) {
-            const rawText = child.textContent || '';
-            const text = nextPreserveText ? rawText : rawText.replace(/\s+/g, ' ').trim();
-            if (text) {
-              output += `${indentUnit.repeat(depth + 1)}${text}\n`;
-            }
-            return;
-          }
-
-          if (child.nodeType === Node.ELEMENT_NODE && !blockElements.has(child.tagName.toLowerCase())) {
-            const inlineChild = formatNode(child, 0, nextPreserveText).trim();
-            if (inlineChild) {
-              output += `${indentUnit.repeat(depth + 1)}${inlineChild}\n`;
-            }
-            return;
-          }
-
-          output += formatNode(child, depth + 1, nextPreserveText);
-        });
-        output += `${indent}</${tag}>\n`;
-        return output;
-      };
-
-      let formatted = '';
-      Array.from(container.childNodes || []).forEach((child) => {
-        formatted += formatNode(child, 0, false);
-      });
-
-      return formatted.trim() || html;
-    }
-  }
-
-  const htmlSourceModeHelper = new HtmlSourceModeHelper();
-
   $.entwine('ss', function ($) {
     $('textarea.htmleditor').entwine({
       onmatch: function () {
@@ -257,6 +198,8 @@ import screenfull from 'screenfull';
           console.error(CONSTANTS.ERROR_MESSAGES.NO_CONFIG);
           return;
         }
+
+        this.data('tiptap-capabilities', this.buildCapabilityRegistry(config));
 
         if (!this.data('tiptap-initialized')) {
           // Create wrapper div for the editor
@@ -407,7 +350,7 @@ import screenfull from 'screenfull';
           ];
 
           // Create TipTap editor
-          const initialContent = this.normalizeContentForTiptap(this.val() || config.content || '');
+          const initialContent = this.normalizeContent(this.val() || config.content || '');
 
           const editor = new Editor({
             element: wrapper[0],
@@ -608,238 +551,67 @@ import screenfull from 'screenfull';
         return options;
       },
 
+      buildCapabilityRegistry: function (config) {
+        const tools = {};
+        TOOLS.forEach((tool) => {
+          tools[tool.action] = tool;
+        });
+
+        const extensionConfig = config.extensions || {};
+        Object.keys(extensionConfig).forEach((action) => {
+          if (window.TipTapExtensions && window.TipTapExtensions[action]) {
+            tools[action] = window.TipTapExtensions[action];
+          }
+        });
+
+        return { tools };
+      },
+
+      getCapabilityRegistry: function () {
+        return this.data('tiptap-capabilities') || { tools: {} };
+      },
+
+      getCapability: function (action) {
+        const registry = this.getCapabilityRegistry();
+        return registry.tools[action] || null;
+      },
+
       // Get available toolbar items configuration
       getToolbarItemsConfig: function (config) {
         // Get tooltips from config (provided by PHP extension)
         const tooltips = config.tooltips || {};
 
-
         // Generate styles options from config
         const styleOptions = this.generateStyleOptions(config.styles || {});
+        const registry = this.getCapabilityRegistry();
 
-        return {
-          'bold': {
-            type: 'button',
-            title: tooltips.bold || 'Bold',
-            action: 'bold',
-            extension: 'bold'
-          },
-          'italic': {
-            type: 'button',
-            title: tooltips.italic || 'Italic',
-            action: 'italic',
-            extension: 'italic'
-          },
-          'underline': {
-            type: 'button',
-            title: tooltips.underline || 'Underline',
-            action: 'underline',
-            extension: 'underline'
-          },
-          'strikethrough': {
-            type: 'button',
-            title: tooltips.strikethrough || 'Strikethrough',
-            action: 'strikethrough',
-            extension: 'strike'
-          },
-          'paragraph': {
-            type: 'button',
-            title: tooltips.paragraph || 'Paragraph',
-            action: 'paragraph',
-            extension: 'heading'
-          },
-          'heading1': {
-            type: 'button',
-            title: tooltips.heading1 || 'Heading 1',
-            action: 'heading1',
-            extension: 'heading'
-          },
-          'heading2': {
-            type: 'button',
-            title: tooltips.heading2 || 'Heading 2',
-            action: 'heading2',
-            extension: 'heading'
-          },
-          'heading3': {
-            type: 'button',
-            title: tooltips.heading3 || 'Heading 3',
-            action: 'heading3',
-            extension: 'heading'
-          },
-          'heading4': {
-            type: 'button',
-            title: tooltips.heading4 || 'Heading 4',
-            action: 'heading4',
-            extension: 'heading'
-          },
-          'heading5': {
-            type: 'button',
-            title: tooltips.heading5 || 'Heading 5',
-            action: 'heading5',
-            extension: 'heading'
-          },
-          'heading6': {
-            type: 'button',
-            title: tooltips.heading6 || 'Heading 6',
-            action: 'heading6',
-            extension: 'heading'
-          },
-          'bulletList': {
-            type: 'button',
-            title: tooltips.list_bullet || 'Bullet List',
-            action: 'bulletList',
-            extension: 'bulletList'
-          },
-          'orderedList': {
-            type: 'button',
-            title: tooltips.list_ordered || 'Numbered List',
-            action: 'orderedList',
-            extension: 'orderedList'
-          },
-          'alignLeft': {
-            type: 'button',
-            title: tooltips.align_left || 'Align Left',
-            action: 'alignLeft',
-            extension: 'textAlign'
-          },
-          'alignCenter': {
-            type: 'button',
-            title: tooltips.align_center || 'Align Center',
-            action: 'alignCenter',
-            extension: 'textAlign'
-          },
-          'alignRight': {
-            type: 'button',
-            title: tooltips.align_right || 'Align Right',
-            action: 'alignRight',
-            extension: 'textAlign'
-          },
-          'alignJustify': {
-            type: 'button',
-            title: tooltips.align_justify || 'Justify',
-            action: 'alignJustify',
-            extension: 'textAlign'
-          },
-          'styles': {
-            type: 'dropdown',
-            title: tooltips.styles || 'Styles',
-            action: 'styles',
-            extension: 'textStyle',
-            options: styleOptions
-          },
-          'blockquote': {
-            type: 'button',
-            title: tooltips.blockquote || 'Quote',
-            action: 'blockquote',
-            extension: 'blockquote'
-          },
-          'horizontalRule': {
-            type: 'button',
-            title: tooltips.horizontalRule || 'Insert Horizontal Rule',
-            action: 'horizontalRule',
-            extension: 'horizontalRule'
-          },
-          'codeBlock': {
-            type: 'button',
-            title: tooltips.codeBlock || 'Code Block',
-            action: 'codeBlock',
-            extension: 'codeBlock'
-          },
-          'code': {
-            type: 'button',
-            title: tooltips.code || 'Inline Code',
-            action: 'code',
-            extension: 'code'
-          },
-          'highlight': {
-            type: 'button',
-            title: tooltips.highlight || 'Highlight',
-            action: 'highlight',
-            extension: 'highlight'
-          },
-          'subscript': {
-            type: 'button',
-            title: tooltips.subscript || 'Subscript',
-            action: 'subscript',
-            extension: 'subscript'
-          },
-          'superscript': {
-            type: 'button',
-            title: tooltips.superscript || 'Superscript',
-            action: 'superscript',
-            extension: 'superscript'
-          },
-          'link': {
-            type: 'button',
-            title: tooltips.link || 'Link',
-            action: 'link',
-            extension: 'link'
-          },
-          'image': {
-            type: 'button',
-            title: tooltips.image || 'Image',
-            action: 'image',
-            extension: 'image'
-          },
-          'undo': {
-            type: 'button',
-            title: tooltips.undo || 'Undo',
-            action: 'undo',
-            extension: 'history'
-          },
-          'redo': {
-            type: 'button',
-            title: tooltips.redo || 'Redo',
-            action: 'redo',
-            extension: 'history'
-          },
-          'fullscreen': {
-            type: 'button',
-            title: tooltips.fullscreen || 'Toggle Fullscreen',
-            action: 'fullscreen',
-            extension: 'custom'
-          },
-          'htmlSource': {
-            type: 'button',
-            title: tooltips.htmlSource || 'HTML Source',
-            action: 'htmlSource',
-            extension: 'custom'
-          },
-          'table': {
-            type: 'dropdown',
-            title: tooltips.table || 'Table',
-            action: 'table',
-            extension: 'table',
-            options: [
-              { action: 'insertTable', text: tooltips.table_insert || 'Insert Table' },
-              { action: 'addColumnBefore', text: tooltips.table_add_column_before || 'Add Column Before' },
-              { action: 'addColumnAfter', text: tooltips.table_add_column_after || 'Add Column After' },
-              { action: 'deleteColumn', text: tooltips.table_delete_column || 'Delete Column' },
-              { action: 'addRowBefore', text: tooltips.table_add_row_before || 'Add Row Before' },
-              { action: 'addRowAfter', text: tooltips.table_add_row_after || 'Add Row After' },
-              { action: 'deleteRow', text: tooltips.table_delete_row || 'Delete Row' },
-              { action: 'deleteTable', text: tooltips.table_delete || 'Delete Table' },
-              { action: 'mergeCells', text: tooltips.table_merge_cells || 'Merge Cells' },
-              { action: 'splitCell', text: tooltips.table_split_cell || 'Split Cell' },
-              { action: 'toggleHeaderColumn', text: tooltips.table_toggle_header_column || 'Toggle Header Column' },
-              { action: 'toggleHeaderRow', text: tooltips.table_toggle_header_row || 'Toggle Header Row' },
-              { action: 'toggleHeaderCell', text: tooltips.table_toggle_header_cell || 'Toggle Header Cell' }
-            ]
-          },
-          'dropdown': {
-            type: 'dropdown',
-            title: 'Dropdown',
-            action: 'dropdown',
-            extension: 'custom',
-            options: [] // Will be populated dynamically from config.extensions
-          },
-          'newline': {
-            type: 'newline'
-          },
-          'separator': {
-            type: 'separator'
+        const toolbarConfig = {};
+        Object.keys(registry.tools).forEach((action) => {
+          if (toolbarConfig[action]) {
+            return;
           }
+
+          const capability = registry.tools[action];
+
+          if (typeof capability.getConfig === 'function') {
+            const item = capability.getConfig({ tooltips, styleOptions });
+            if (item) {
+              toolbarConfig[action] = item;
+            }
+          }
+        });
+
+        toolbarConfig.dropdown = {
+          type: 'dropdown',
+          title: 'Dropdown',
+          action: 'dropdown',
+          extension: 'custom',
+          options: [],
         };
+        toolbarConfig.newline = { type: 'newline' };
+        toolbarConfig.separator = { type: 'separator' };
+
+        return toolbarConfig;
       },
 
       // Helper method to create a configurable toolbar
@@ -858,43 +630,35 @@ import screenfull from 'screenfull';
 
       // Process extensions for toolbar
       createToolbarProcessExtensions: function (config, editor) {
-        if (config.extensions) {
-          this.initializeExtensions(config.extensions, editor, config);
-        }
+        this.initializeExtensions(editor, config);
       },
 
       // Build toolbar items based on configuration
       createToolbarItems: function (toolbar, config, editor) {
         const toolbarConfig = this.getToolbarItemsConfig(config);
         const toolbarLayout = config.toolbar || [];
+        const registry = this.getCapabilityRegistry();
 
         // Build toolbar based on configuration
         toolbarLayout.forEach(item => {
-          let itemName, itemConfig;
+          let itemConfig = toolbarConfig[item];
 
+          if (registry.tools[item] && typeof registry.tools[item].getToolbarConfig === 'function') {
+            itemConfig = registry.tools[item].getToolbarConfig({ tooltips: config.tooltips, styleOptions: this.generateStyleOptions(config.styles || {}) });
+          }
           // Handle grouped objects (like dropdown: { title: 'Links', icon: 'links', actions: [...] })
           if (typeof item === 'object' && item !== null) {
-            const dropdown = this.createGenericDropdown(item, itemConfig, editor, config);
-            if (dropdown) {
-              toolbar.append(dropdown);
-            }
+            toolbar.append(this.createGenericDropdown(item, itemConfig, editor, config));
             return;
-          } else {
-            // Regular string item
-            itemName = item;
-            itemConfig = toolbarConfig[itemName];
           }
 
           // loading extensions to main toolbar
           if (!itemConfig) {
-            let buttontitle = config.tooltips && config.tooltips[itemName] ? config.tooltips[itemName] : itemName;
-
-            // Parse tooltip to extract just the title part for button text
-            const parts = this.parseTooltipText(buttontitle);
+            let buttontitle = config.tooltips && config.tooltips[item] ? config.tooltips[item] : item;
 
             const itemConfig = {
-              action: itemName,
-              extension: itemName,
+              action: item,
+              extension: item,
               title: buttontitle, // Full text with shortcuts for tooltip
               type: "button",
               buttontext: '' // Just the title part for button text
@@ -918,25 +682,15 @@ import screenfull from 'screenfull';
             return;
           }
 
-          // Check if required extension is available (skip check for custom buttons)
-          const requiredExtensions = Array.isArray(itemConfig.extension) ? itemConfig.extension : [itemConfig.extension];
-          const hasRequiredExtension = itemConfig.extension === 'custom' || requiredExtensions.some(extName =>
-            editor.extensionManager.extensions.find(ext => ext.name === extName)
-          );
-
-          if (!hasRequiredExtension) {
-            return;
-          }
-
           if (itemConfig.type === 'button') {
             // Create button
             itemConfig.buttontext = '';
             const button = this.createToolbarButton(itemConfig, editor);
             toolbar.append(button);
           } else if (itemConfig.type === 'dropdown') {
-            // Create dropdown
-            // For extension dropdowns, pass the toolbarConfig and itemName for context
-            const dropdown = this.createToolbarDropdown(itemConfig, editor, toolbarConfig[itemName]);
+            //  Create dropdown
+            //  For extension dropdowns, pass the toolbarConfig and itemName for context
+            const dropdown = this.createToolbarDropdown(itemConfig, editor, toolbarConfig[item]);
             toolbar.append(dropdown);
           }
         });
@@ -954,30 +708,27 @@ import screenfull from 'screenfull';
       },
 
       // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
-      normalizeContentForTiptap: function (content) {
-        if (window.TipTapExtensions) {
-          // Loop through extensions to find any that have a normalizeContentForTiptap method
-          for (const extensionName in window.TipTapExtensions) {
-            const ExtensionClass = window.TipTapExtensions[extensionName];
-            if (ExtensionClass && typeof ExtensionClass.normalizeContentForTiptap === 'function') {
-              content = ExtensionClass.normalizeContentForTiptap(content);
-            }
+      normalizeContent: function (content) {
+        const registry = this.getCapabilityRegistry();
+        return Object.keys(registry.tools).reduce((acc, action) => {
+          const capability = registry.tools[action];
+          if (typeof capability.normalizeContent === 'function') {
+            return capability.normalizeContent({ content: acc });
           }
-        }
-        return content;
+        }, content);
       },
 
       // Initialize extensions
-      initializeExtensions: function (extensions, editor, config) {
-        Object.keys(extensions).forEach(extensionName => {
-          if (window.TipTapExtensions && window.TipTapExtensions[extensionName]) {
-            const ExtensionClass = window.TipTapExtensions[extensionName];
-            if (typeof ExtensionClass.init === 'function') {
-              ExtensionClass.init(editor, config, this);
-            }
-            if (typeof ExtensionClass.setCMSContext === 'function') {
-              ExtensionClass.setCMSContext(this.getCMSContext());
-            }
+      initializeExtensions: function (editor, config) {
+        const registry = this.getCapabilityRegistry();
+        Object.keys(registry.tools).forEach((action) => {
+          const capability = registry.tools[action];
+          if (typeof capability.init === 'function') {
+            capability.init({ editor, config, host: this });
+          }
+          if (typeof capability.setContext === 'function') {
+            //capability.init({ editor, config, host: this });
+            capability.setContext({ context: this.getCMSContext() });
           }
         });
       },
@@ -1017,6 +768,8 @@ import screenfull from 'screenfull';
 
       // Create generic dropdown for grouped objects
       createGenericDropdown: function (item, dropdownConfig, editor, config) {
+        console.log('createGenericDropdown', item);
+
         const dropdown = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
         const button = $(`<button type="button" data-action="${item.title}" class="${item.icon}"></button>`);
         const dropdownMenu = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
@@ -1067,6 +820,7 @@ import screenfull from 'screenfull';
 
         // on button click
         button.on('click', (e) => {
+          console.log('gsdfds?');
           e.preventDefault();
 
           // Check if button is disabled
@@ -1075,174 +829,23 @@ import screenfull from 'screenfull';
           }
 
 
-          // if you click an extension button, call its onClick method if available
-          const ExtensionClass = window.TipTapExtensions[itemConfig.action];
-          if (ExtensionClass) {
-            if (typeof ExtensionClass.onClick === 'function') {
-              ExtensionClass.onClick(editor, itemConfig, this);
-            } else if (typeof ExtensionClass.openLinkDialog === 'function') {
-              ExtensionClass.openLinkDialog(editor);
-            }
-          }
-
-          switch (itemConfig.action) {
-            case 'bold':
-              if (editor.can().toggleBold()) {
-                editor.chain().focus().toggleBold().run();
-              }
-              break;
-            case 'italic':
-              if (editor.can().toggleItalic()) {
-                editor.chain().focus().toggleItalic().run();
-              }
-              break;
-            case 'underline':
-              if (editor.can().toggleUnderline()) {
-                editor.chain().focus().toggleUnderline().run();
-              }
-              break;
-            case 'strikethrough':
-              if (editor.can().toggleStrike()) {
-                editor.chain().focus().toggleStrike().run();
-              }
-              break;
-            case 'blockquote':
-              if (editor.can().toggleBlockquote()) {
-                editor.chain().focus().toggleBlockquote().run();
-              }
-              break;
-            case 'horizontalRule':
-              if (editor.can().setHorizontalRule()) {
-                editor.chain().focus().setHorizontalRule().run();
-              }
-              break;
-            case 'codeBlock':
-              if (editor.can().toggleCodeBlock()) {
-                editor.chain().focus().toggleCodeBlock().run();
-              }
-              break;
-            case 'code':
-              if (editor.can().toggleCode()) {
-                editor.chain().focus().toggleCode().run();
-              }
-              break;
-            case 'highlight':
-              if (editor.can().toggleHighlight()) {
-                editor.chain().focus().toggleHighlight().run();
-              }
-              break;
-            case 'subscript':
-              if (editor.can().toggleSubscript()) {
-                editor.chain().focus().toggleSubscript().run();
-              }
-              break;
-            case 'superscript':
-              if (editor.can().toggleSuperscript()) {
-                editor.chain().focus().toggleSuperscript().run();
-              }
-              break;
-            case 'bulletList':
-              if (editor.can().toggleBulletList()) {
-                editor.chain().focus().toggleBulletList().run();
-              }
-              break;
-            case 'orderedList':
-              if (editor.can().toggleOrderedList()) {
-                editor.chain().focus().toggleOrderedList().run();
-              }
-              break;
-            case 'alignLeft':
-              if (editor.can().setTextAlign('left')) {
-                editor.chain().focus().setTextAlign('left').run();
-              }
-              break;
-            case 'alignCenter':
-              if (editor.can().setTextAlign('center')) {
-                editor.chain().focus().setTextAlign('center').run();
-              }
-              break;
-            case 'alignRight':
-              if (editor.can().setTextAlign('right')) {
-                editor.chain().focus().setTextAlign('right').run();
-              }
-              break;
-            case 'alignJustify':
-              if (editor.can().setTextAlign('justify')) {
-                editor.chain().focus().setTextAlign('justify').run();
-              }
-              break;
-            case 'link':
-              // TODO: Implement link dialog
-              const url = prompt('Enter URL:');
-              if (url && editor.can().setLink({ href: url })) {
-                editor.chain().focus().setLink({ href: url }).run();
-              }
-              break;
-            case 'image':
-              // TODO: Implement image dialog
-              const src = prompt('Enter image URL:');
-              if (src && editor.can().setImage({ src })) {
-                editor.chain().focus().setImage({ src }).run();
-              }
-              break;
-            case 'undo':
-              if (editor.can().undo()) {
-                editor.chain().focus().undo().run();
-              }
-              break;
-            case 'redo':
-              if (editor.can().redo()) {
-                editor.chain().focus().redo().run();
-              }
-              break;
-            case 'fullscreen':
-              if (screenfull.isEnabled) {
-                const wrapper = button.closest('.tiptap-wrapper')[0];
-                if (screenfull.isFullscreen) {
-                  screenfull.exit();
-                } else {
-                  screenfull.request(wrapper);
-                }
-              }
-              break;
-            case 'htmlSource':
-              self.toggleHtmlSource(editor, button);
-              break;
-            case 'paragraph':
-              if (editor.can().setParagraph()) {
-                editor.chain().focus().setParagraph().run();
-              }
-              break;
-            case 'heading1':
-              if (editor.can().toggleHeading({ level: 1 })) {
-                editor.chain().focus().toggleHeading({ level: 1 }).run();
-              }
-              break;
-            case 'heading2':
-              if (editor.can().toggleHeading({ level: 2 })) {
-                editor.chain().focus().toggleHeading({ level: 2 }).run();
-              }
-              break;
-            case 'heading3':
-              if (editor.can().toggleHeading({ level: 3 })) {
-                editor.chain().focus().toggleHeading({ level: 3 }).run();
-              }
-              break;
-            case 'heading4':
-              if (editor.can().toggleHeading({ level: 4 })) {
-                editor.chain().focus().toggleHeading({ level: 4 }).run();
-              }
-              break;
-            case 'heading5':
-              if (editor.can().toggleHeading({ level: 5 })) {
-                editor.chain().focus().toggleHeading({ level: 5 }).run();
-              }
-              break;
-            case 'heading6':
-              if (editor.can().toggleHeading({ level: 6 })) {
-                editor.chain().focus().toggleHeading({ level: 6 }).run();
-              }
-              break;
+          const config = this.data('tiptap-config') || {};
+          const capability = this.getCapability(itemConfig.action, !!(config.extensions && config.extensions[itemConfig.action]));
+          console.log('capability', capability, itemConfig.action);
+          if (capability) {
+            capability.run({
+              editor,
+              button,
+              itemConfig,
+              host: this,
+              context: {
+                $,
+                constants: CONSTANTS,
+                normalizeContent: (html) => this.normalizeContent(html),
+                autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
+                generateStyleOptions: (styles) => this.generateStyleOptions(styles),
+              },
+            });
           }
 
           // Refresh toolbar states after action
@@ -1260,9 +863,11 @@ import screenfull from 'screenfull';
         const button = $(`<button type="button" data-action="${itemConfig.action}"></button>`);
         const dropdownMenu = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
         const self = this;
+        const config = this.data('tiptap-config') || {};
+        const capability = this.getCapability(itemConfig.action, !!(config.extensions && config.extensions[itemConfig.action]));
 
         // Add special class for table dropdown to allow wider styling
-        if (itemConfig.action === 'table') {
+        if (itemConfig.type === 'dropdown') {
           dropdownMenu.addClass(CONSTANTS.CSS_CLASSES.TABLE_DROPDOWN);
         }
 
@@ -1270,331 +875,86 @@ import screenfull from 'screenfull';
         this.addTooltip(button, itemConfig.title);
 
         // Add dropdown options
-        if (itemConfig.options) {
+        const wasCustomRendered = capability && capability.renderDropdownOptions({
+          itemConfig,
+          dropdown,
+          dropdownMenu,
+          button,
+          editor,
+          host: this,
+          context: {
+            $,
+            constants: CONSTANTS,
+            parseTooltipText: (text) => this.parseTooltipText(text),
+            addTooltip: (btn, text) => this.addTooltip(btn, text),
+            updateToolbarStates: (toolbar, editorInstance) => this.updateToolbarStates(toolbar, editorInstance),
+          },
+        });
+
+        if (!wasCustomRendered && itemConfig.options) {
           itemConfig.options.forEach(option => {
             let optionBtn;
 
-            if (itemConfig.action === 'heading') {
-              // Heading dropdown
-              const parts = this.parseTooltipText(option.text);
-              optionBtn = $(`<button type="button" data-level="${option.level || 'paragraph'}">${parts.title}</button>`);
+            const optionAction = option.action || '';
+            const parts = this.parseTooltipText(option.text);
+            optionBtn = $(`<button type="button" data-option-action="${optionAction}" data-parent-action="${itemConfig.action}">${parts.title}</button>`);
 
-              // Add tooltip if there's a shortcut or always for consistency
-              this.addTooltip(optionBtn, option.text);
+            // Add tooltip if there's a shortcut or always for consistency
+            this.addTooltip(optionBtn, option.text);
 
-              optionBtn.on('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+            optionBtn.on('click', (e) => {
+              console.log('here?');
+              e.preventDefault();
+              e.stopPropagation();
 
-                // Check if button is disabled
-                if (optionBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
-                  return;
-                }
-
-                if (option.level) {
-                  if (editor.can().toggleHeading({ level: option.level })) {
-                    editor.chain().focus().toggleHeading({ level: option.level }).run();
-                  }
-                } else {
-                  if (editor.can().setParagraph()) {
-                    editor.chain().focus().setParagraph().run();
-                  }
-                }
-
-                dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-                // Refresh toolbar states after action
-                setTimeout(() => {
-                  self.updateToolbarStates(dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
-                }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
-              });
-            } else if (itemConfig.action === 'bulletList') {
-              // List dropdown
-              const parts = this.parseTooltipText(option.text);
-              optionBtn = $(`<button type="button" data-list-type="${option.type}">${parts.title}</button>`);
-
-              // Add tooltip if there's a shortcut or always for consistency
-              this.addTooltip(optionBtn, option.text);
-
-              optionBtn.on('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Check if button is disabled
-                if (optionBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
-                  return;
-                }
-
-                if (option.type === 'bulletList') {
-                  if (editor.can().toggleBulletList()) {
-                    editor.chain().focus().toggleBulletList().run();
-                  }
-                } else if (option.type === 'orderedList') {
-                  if (editor.can().toggleOrderedList()) {
-                    editor.chain().focus().toggleOrderedList().run();
-                  }
-                }
-
-                dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-                // Refresh toolbar states after action
-                setTimeout(() => {
-                  self.updateToolbarStates(dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
-                }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
-              });
-            } else if (itemConfig.action === 'styles') {
-              // Styles dropdown
-              if (option.isGroup) {
-                // Group/submenu item
-                const groupItem = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}">
-                  <span class="${CONSTANTS.CSS_CLASSES.GROUP_TEXT}">${option.text}</span>
-                  <span class="${CONSTANTS.CSS_CLASSES.GROUP_ARROW}">›</span>
-                </div>`);
-
-                // Create submenu
-                const submenu = $(`<div class="${CONSTANTS.CSS_CLASSES.SUBMENU}"></div>`);
-
-                // Add child items to submenu
-                if (option.children && option.children.length > 0) {
-                  option.children.forEach(child => {
-                    if (child.isStyle) {
-                      const parts = this.parseTooltipText(child.text);
-                      const childBtn = $(`<button type="button" data-style-class="${child.className}" class="${CONSTANTS.CSS_CLASSES.STYLE_OPTION}">${parts.title}</button>`);
-
-                      // Add tooltip if there's a shortcut or always for consistency
-                      this.addTooltip(childBtn, child.text);
-
-                      // Add preview class to the button for styling
-                      if (child.previewClass) {
-                        childBtn.addClass(child.previewClass);
-                      }
-
-                      childBtn.on('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        // Check if button is disabled
-                        if (childBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
-                          return;
-                        }
-
-                        if (child.className) {
-                          // Check if style is already active
-                          if (editor.isActive('textStyle', { class: child.className })) {
-                            // Remove the style
-                            if (editor.can().unsetMark('textStyle')) {
-                              editor.chain().focus().unsetMark('textStyle').run();
-                            }
-                          } else {
-                            // Apply the style
-                            if (editor.can().setMark('textStyle', { class: child.className })) {
-                              editor.chain().focus().setMark('textStyle', { class: child.className }).run();
-                            }
-                          }
-                        }
-
-                        dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-                        // Refresh toolbar states after action
-                        setTimeout(() => {
-                          self.updateToolbarStates(dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
-                        }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
-                      });
-
-                      submenu.append(childBtn);
-                    }
-                  });
-                }
-
-                // Add hover/click events for submenu
-                let submenuTimeout;
-
-                groupItem.on('mouseenter', () => {
-                  clearTimeout(submenuTimeout);
-                  // Position submenu
-                  const groupOffset = groupItem.offset();
-                  const groupWidth = groupItem.outerWidth();
-                  const groupHeight = groupItem.outerHeight();
-
-                  submenu.css({
-                    position: 'absolute',
-                    top: groupOffset.top,
-                    left: groupOffset.left + groupWidth,
-                    zIndex: CONSTANTS.Z_INDEX.SUBMENU
-                  });
-
-                  submenu.addClass(CONSTANTS.CSS_CLASSES.SHOW);
-                });
-
-                groupItem.on('mouseleave', () => {
-                  submenuTimeout = setTimeout(() => {
-                    submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-                  }, CONSTANTS.SUBMENU_HIDE_DELAY);
-                });
-
-                submenu.on('mouseenter', () => {
-                  clearTimeout(submenuTimeout);
-                });
-
-                submenu.on('mouseleave', () => {
-                  submenuTimeout = setTimeout(() => {
-                    submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-                  }, CONSTANTS.SUBMENU_HIDE_DELAY);
-                });
-
-                // Click to toggle submenu
-                groupItem.on('click', (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  submenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
-                });
-
-                // Append submenu to body to avoid clipping
-                $('body').append(submenu);
-
-                // Store submenu reference for cleanup
-                groupItem.data('submenu', submenu);
-
-                dropdownMenu.append(groupItem);
-                return; // Skip the optionBtn append for group items
-              } else if (option.isStyle) {
-                // Style option
-                const parts = this.parseTooltipText(option.text);
-                optionBtn = $(`<button type="button" data-style-class="${option.className}" class="${CONSTANTS.CSS_CLASSES.STYLE_OPTION}">${parts.title}</button>`);
-
-                // Add tooltip if there's a shortcut or always for consistency
-                this.addTooltip(optionBtn, option.text);
-
-                // Add preview class to the button for styling
-                if (option.previewClass) {
-                  optionBtn.addClass(option.previewClass);
-                }
-
-                optionBtn.on('click', (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  // Check if button is disabled
-                  if (optionBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
-                    return;
-                  }
-
-                  if (option.className) {
-                    // Check if style is already active
-                    if (editor.isActive('textStyle', { class: option.className })) {
-                      // Remove the style
-                      if (editor.can().unsetMark('textStyle')) {
-                        editor.chain().focus().unsetMark('textStyle').run();
-                      }
-                    } else {
-                      // Apply the style
-                      if (editor.can().setMark('textStyle', { class: option.className })) {
-                        editor.chain().focus().setMark('textStyle', { class: option.className }).run();
-                      }
-                    }
-                  }
-
-                  dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-                  // Refresh toolbar states after action
-                  setTimeout(() => {
-                    self.updateToolbarStates(dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
-                  }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
-                });
+              // Check if button is disabled
+              if (optionBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
+                return;
               }
-            } else if (itemConfig.action === 'table') {
-              // Table dropdown
-              const parts = this.parseTooltipText(option.text);
-              optionBtn = $(`<button type="button" data-table-action="${option.action}">${parts.title}</button>`);
 
-              // Add tooltip if there's a shortcut or always for consistency
-              this.addTooltip(optionBtn, option.text);
-
-              optionBtn.on('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Check if button is disabled
-                if (optionBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
-                  return;
+              const parentCapability = this.getCapability(itemConfig.action);
+              if (parentCapability && typeof parentCapability.runOption === 'function') {
+                parentCapability.runOption({
+                  optionAction,
+                  option,
+                  editor,
+                  host: this,
+                  context: {
+                    constants: CONSTANTS,
+                  },
+                });
+              } else if (optionAction) {
+                const optionCapability = this.getCapability(optionAction, !!(config.extensions && config.extensions[optionAction]));
+                if (optionCapability) {
+                  optionCapability.run({
+                    editor,
+                    itemConfig: {
+                      action: optionAction,
+                      extension: optionAction,
+                      title: option.text,
+                      type: 'button',
+                      buttontext: '',
+                    },
+                    host: this,
+                    context: {
+                      $,
+                      constants: CONSTANTS,
+                      normalizeContent: (html) => this.normalizeContent(html),
+                      autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
+                      generateStyleOptions: (styles) => this.generateStyleOptions(styles),
+                    },
+                  });
                 }
+              }
 
-                switch (option.action) {
-                  case 'insertTable':
-                    if (editor.can().insertTable()) {
-                      editor.chain().focus().insertTable({ rows: CONSTANTS.TABLE_DEFAULT_ROWS, cols: CONSTANTS.TABLE_DEFAULT_COLS, withHeaderRow: true }).run();
-                    }
-                    break;
-                  case 'addColumnBefore':
-                    if (editor.can().addColumnBefore()) {
-                      editor.chain().focus().addColumnBefore().run();
-                    }
-                    break;
-                  case 'addColumnAfter':
-                    if (editor.can().addColumnAfter()) {
-                      editor.chain().focus().addColumnAfter().run();
-                    }
-                    break;
-                  case 'deleteColumn':
-                    if (editor.can().deleteColumn()) {
-                      editor.chain().focus().deleteColumn().run();
-                    }
-                    break;
-                  case 'addRowBefore':
-                    if (editor.can().addRowBefore()) {
-                      editor.chain().focus().addRowBefore().run();
-                    }
-                    break;
-                  case 'addRowAfter':
-                    if (editor.can().addRowAfter()) {
-                      editor.chain().focus().addRowAfter().run();
-                    }
-                    break;
-                  case 'deleteRow':
-                    if (editor.can().deleteRow()) {
-                      editor.chain().focus().deleteRow().run();
-                    }
-                    break;
-                  case 'deleteTable':
-                    if (editor.can().deleteTable()) {
-                      editor.chain().focus().deleteTable().run();
-                    }
-                    break;
-                  case 'mergeCells':
-                    if (editor.can().mergeCells()) {
-                      editor.chain().focus().mergeCells().run();
-                    }
-                    break;
-                  case 'splitCell':
-                    if (editor.can().splitCell()) {
-                      editor.chain().focus().splitCell().run();
-                    }
-                    break;
-                  case 'toggleHeaderColumn':
-                    if (editor.can().toggleHeaderColumn()) {
-                      editor.chain().focus().toggleHeaderColumn().run();
-                    }
-                    break;
-                  case 'toggleHeaderRow':
-                    if (editor.can().toggleHeaderRow()) {
-                      editor.chain().focus().toggleHeaderRow().run();
-                    }
-                    break;
-                  case 'toggleHeaderCell':
-                    if (editor.can().toggleHeaderCell()) {
-                      editor.chain().focus().toggleHeaderCell().run();
-                    }
-                    break;
-                }
+              dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
 
-                dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+              // Refresh toolbar states after action
+              setTimeout(() => {
+                self.updateToolbarStates(dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
+              }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
+            });
 
-                // Refresh toolbar states after action
-                setTimeout(() => {
-                  self.updateToolbarStates(dropdown.closest('.tiptap-toolbar'), editor);
-                }, 10);
-              });
-            }
             if (optionBtn) {
               dropdownMenu.append(optionBtn);
             }
@@ -1655,242 +1015,37 @@ import screenfull from 'screenfull';
           // Remove existing state classes
           btn.removeClass(`${CONSTANTS.CSS_CLASSES.ACTIVE} ${CONSTANTS.CSS_CLASSES.DISABLED}`);
 
-          // Check if this is an extension
-          if (config.extensions && config.extensions[action]) {
-            const extensionName = action;
-            if (window.TipTapExtensions && window.TipTapExtensions[extensionName]) {
-              const extension = window.TipTapExtensions[extensionName];
-              if (typeof extension.isActive === 'function') {
-                btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, extension.isActive(editor));
-              }
-              if (typeof extension.isDisabled === 'function') {
-                btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, extension.isDisabled(editor));
-              }
-            }
-            return;
-          }
-
           // Handle built-in actions
           self.updateToolbarButtonState(btn, action, editor, config);
         });
       },
 
       // Update individual button state based on action
-      updateToolbarButtonState: function (btn, action, editor, config) {
-        const self = this;
-
-        switch (action) {
-          case 'bold':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('bold'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleBold());
-            break;
-          case 'italic':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('italic'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleItalic());
-            break;
-          case 'underline':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('underline'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleUnderline());
-            break;
-          case 'strikethrough':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('strike'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleStrike());
-            break;
-          case 'paragraph':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('paragraph'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setParagraph());
-            break;
-          case 'heading1':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('heading', { level: 1 }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleHeading({ level: 1 }));
-            break;
-          case 'heading2':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('heading', { level: 2 }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleHeading({ level: 2 }));
-            break;
-          case 'heading3':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('heading', { level: 3 }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleHeading({ level: 3 }));
-            break;
-          case 'heading4':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('heading', { level: 4 }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleHeading({ level: 4 }));
-            break;
-          case 'heading5':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('heading', { level: 5 }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleHeading({ level: 5 }));
-            break;
-          case 'heading6':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('heading', { level: 6 }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleHeading({ level: 6 }));
-            break;
-          case 'bulletList':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('bulletList'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleBulletList());
-            break;
-          case 'orderedList':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('orderedList'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleOrderedList());
-            break;
-          case 'alignLeft':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive({ textAlign: 'left' }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setTextAlign('left'));
-            break;
-          case 'alignCenter':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive({ textAlign: 'center' }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setTextAlign('center'));
-            break;
-          case 'alignRight':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive({ textAlign: 'right' }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setTextAlign('right'));
-            break;
-          case 'alignJustify':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive({ textAlign: 'justify' }));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setTextAlign('justify'));
-            break;
-          case 'styles':
-            // Check if any style is currently active
-            const styleOptions = self.generateStyleOptions(config.styles || {});
-            let isAnyStyleActive = false;
-
-            const checkStyleActive = (option) => {
-              if (option.isStyle && option.className) {
-                if (editor.isActive('textStyle', { class: option.className })) {
-                  isAnyStyleActive = true;
-                }
-              } else if (option.isGroup && option.children) {
-                option.children.forEach(child => checkStyleActive(child));
-              }
-            };
-
-            styleOptions.forEach(option => checkStyleActive(option));
-
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, isAnyStyleActive);
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setMark('textStyle'));
-            break;
-          case 'table':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('table'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().insertTable());
-            break;
-          case 'blockquote':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('blockquote'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleBlockquote());
-            break;
-          case 'horizontalRule':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setHorizontalRule());
-            break;
-          case 'codeBlock':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('codeBlock'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleCodeBlock());
-            break;
-          case 'code':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('code'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleCode());
-            break;
-          case 'highlight':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('highlight'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleHighlight());
-            break;
-          case 'subscript':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('subscript'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleSubscript());
-            break;
-          case 'superscript':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('superscript'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().toggleSuperscript());
-            break;
-          case 'link':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, editor.isActive('link'));
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().setLink({ href: '#' }));
-            break;
-          case 'undo':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().undo());
-            break;
-          case 'redo':
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, !editor.can().redo());
-            break;
-          case 'fullscreen':
-            if (screenfull.isEnabled) {
-              btn.toggleClass('active', screenfull.isFullscreen);
-              btn.toggleClass('disabled', false);
-            } else {
-              btn.toggleClass('disabled', true);
-            }
-            break;
-          case 'htmlSource':
-            const wrapper = btn.closest('.tiptap-wrapper');
-            const isHtmlMode = wrapper.hasClass(CONSTANTS.CSS_CLASSES.HTML_SOURCE);
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, isHtmlMode);
-            btn.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, false);
-            break;
+      updateToolbarButtonState: function (button, action, editor, config) {
+        const capability = this.getCapability(action, !!(config.extensions && config.extensions[action]));
+        if (!capability) {
+          return;
+        }
+        if (typeof capability.isActive === 'function') {
+          button.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, capability.isActive(editor));
+        }
+        if (typeof capability.isDisabled === 'function') {
+          button.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, capability.isDisabled(editor));
         }
       },
 
       // Update dropdown menu button states
       updateToolbarDropdownButtons: function (toolbar, editor) {
+        const config = this.data('tiptap-config') || {};
         toolbar.find('.dropdown-menu button').each(function () {
           const btn = $(this);
-          const level = btn.attr('data-level');
-          const listType = btn.attr('data-list-type');
-          const styleClass = btn.attr('data-style-class');
-          const tableAction = btn.attr('data-table-action');
-
-          // Remove existing state classes
-          btn.removeClass('active disabled');
-
-          if (listType) {
-            // Handle list dropdown
-            btn.toggleClass('active', editor.isActive(listType));
-            if (listType === 'bulletList') {
-              btn.toggleClass('disabled', !editor.can().toggleBulletList());
-            } else if (listType === 'orderedList') {
-              btn.toggleClass('disabled', !editor.can().toggleOrderedList());
+          applyDropdownButtonState(btn, editor, CONSTANTS, (action) => {
+            if (!action) {
+              return null;
             }
-          } else if (styleClass) {
-            // Handle styles dropdown
-            btn.toggleClass('active', editor.isActive('textStyle', { class: styleClass }));
-            btn.toggleClass('disabled', !editor.can().setMark('textStyle', { class: styleClass }));
-          } else if (tableAction) {
-            // Handle table dropdown
-            switch (tableAction) {
-              case 'insertTable':
-                btn.toggleClass('disabled', !editor.can().insertTable());
-                break;
-              case 'addColumnBefore':
-              case 'addColumnAfter':
-                btn.toggleClass('disabled', !editor.can().addColumnBefore() && !editor.can().addColumnAfter());
-                break;
-              case 'deleteColumn':
-                btn.toggleClass('disabled', !editor.can().deleteColumn());
-                break;
-              case 'addRowBefore':
-              case 'addRowAfter':
-                btn.toggleClass('disabled', !editor.can().addRowBefore() && !editor.can().addRowAfter());
-                break;
-              case 'deleteRow':
-                btn.toggleClass('disabled', !editor.can().deleteRow());
-                break;
-              case 'deleteTable':
-                btn.toggleClass('disabled', !editor.can().deleteTable());
-                break;
-              case 'mergeCells':
-                btn.toggleClass('disabled', !editor.can().mergeCells());
-                break;
-              case 'splitCell':
-                btn.toggleClass('disabled', !editor.can().splitCell());
-                break;
-              case 'toggleHeaderColumn':
-                btn.toggleClass('disabled', !editor.can().toggleHeaderColumn());
-                break;
-              case 'toggleHeaderRow':
-                btn.toggleClass('disabled', !editor.can().toggleHeaderRow());
-                break;
-              case 'toggleHeaderCell':
-                btn.toggleClass('disabled', !editor.can().toggleHeaderCell());
-                break;
-            }
-          }
-        });
+            return this.getCapability(action, !!(config.extensions && config.extensions[action]));
+          });
+        }.bind(this));
       },
 
       // Add tooltip functionality to a button
@@ -1983,118 +1138,6 @@ import screenfull from 'screenfull';
         tooltip.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
       },
 
-      // Toggle dropdown menu
-      toggleDropdown: function (dropdownContainer) {
-        const dropdownMenu = dropdownContainer.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`);
-        const isOpen = dropdownMenu.hasClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-        // Close all other dropdowns first
-        const toolbar = dropdownContainer.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
-        toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-        // Toggle this dropdown
-        if (!isOpen) {
-          dropdownMenu.addClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-          // Hide any visible tooltips when dropdown opens
-          $(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-        }
-      },
-
-      // Close dropdown menu
-      closeDropdown: function (dropdownContainer) {
-        const dropdownMenu = dropdownContainer.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`);
-        dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-      },
-
-      // Toggle HTML source view
-      toggleHtmlSource: function (editor, button) {
-        const wrapper = button.closest(`.${CONSTANTS.CSS_CLASSES.WRAPPER}`);
-        const isHtmlMode = wrapper.hasClass(CONSTANTS.CSS_CLASSES.HTML_SOURCE);
-
-        if (isHtmlMode) {
-          // Switch back to WYSIWYG mode
-          this.exitHtmlSource(editor, wrapper);
-        } else {
-          // Switch to HTML source mode
-          this.enterHtmlSource(editor, wrapper);
-        }
-      },
-
-      // Enter HTML source mode
-      enterHtmlSource: function (editor, wrapper) {
-        const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`);
-        const currentHtml = editor.getHTML();
-        const formattedHtml = htmlSourceModeHelper.formatHtmlForSourceView(currentHtml);
-
-        // Create textarea for HTML editing
-        const htmlTextarea = $(`<textarea class="${CONSTANTS.CSS_CLASSES.HTML_TEXTAREA}"></textarea>`);
-        htmlTextarea.val(formattedHtml);
-
-        // Hide the ProseMirror editor
-        proseMirrorElement.hide();
-
-        // Insert the textarea after the ProseMirror editor
-        proseMirrorElement.after(htmlTextarea);
-
-        // Add class to wrapper to indicate HTML mode
-        wrapper.addClass(CONSTANTS.CSS_CLASSES.HTML_SOURCE);
-
-        // Auto-resize the textarea to fit content
-        this.autoResizeTextarea(htmlTextarea);
-
-        // Add input listener for dynamic resizing
-        htmlTextarea.on('input', () => {
-          this.autoResizeTextarea(htmlTextarea);
-        });
-
-        // Prevent parent Elemental/global key handlers from hijacking focus while editing source.
-        htmlSourceModeHelper.attachKeyGuard(wrapper, htmlTextarea);
-
-        // Focus the textarea
-        htmlTextarea.focus();
-
-        // Store reference to the textarea
-        wrapper.data('html-textarea', htmlTextarea);
-        wrapper.data('html-source-original', currentHtml);
-        wrapper.data('html-source-formatted', formattedHtml);
-      },
-
-      // Exit HTML source mode
-      exitHtmlSource: function (editor, wrapper) {
-        const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`);
-        const htmlTextarea = wrapper.data('html-textarea');
-        const originalHtml = wrapper.data('html-source-original');
-        const formattedOriginalHtml = wrapper.data('html-source-formatted');
-
-        if (htmlTextarea) {
-          // Get the HTML content from textarea
-          const htmlContent = htmlTextarea.val();
-          const sourceHtml = htmlContent === formattedOriginalHtml ? (originalHtml || htmlContent) : htmlContent;
-          const normalizedHtmlContent = this.normalizeContentForTiptap(sourceHtml);
-
-          // Update the editor with the new HTML
-          editor.commands.setContent(normalizedHtmlContent);
-
-          // Remove the textarea
-          htmlTextarea.remove();
-          wrapper.removeData('html-textarea');
-        }
-
-        htmlSourceModeHelper.detachKeyGuard(wrapper);
-
-        wrapper.removeData('html-source-original');
-        wrapper.removeData('html-source-formatted');
-
-        // Show the ProseMirror editor
-        proseMirrorElement.show();
-
-        // Remove class from wrapper
-        wrapper.removeClass(CONSTANTS.CSS_CLASSES.HTML_SOURCE);
-
-        // Focus the editor
-        editor.commands.focus();
-      },
 
       // Add keyboard shortcuts
       addKeyboardShortcuts: function (wrapper, editor) {
@@ -2106,9 +1149,12 @@ import screenfull from 'screenfull';
           if (e.ctrlKey && e.shiftKey && e.key === 'H') {
             e.preventDefault();
             const htmlSourceButton = wrapper.find('button[data-action="htmlSource"]');
-            if (htmlSourceButton.length) {
-              self.toggleHtmlSource(editor, htmlSourceButton);
-            }
+            toggleHtmlSourceTool(editor, htmlSourceButton, {
+              $,
+              constants: CONSTANTS,
+              normalizeContent: (html) => this.normalizeContent(html),
+              autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
+            });
           }
 
           // Alignment shortcuts
@@ -2191,19 +1237,10 @@ import screenfull from 'screenfull';
         // Store context on the entwine instance
         this.data('tiptap-cms-context', context);
 
-        // Get the editor configuration to find loaded extensions
-        const config = this.data('tiptap-config');
-        if (config && config.extensions) {
-          // Propagate context to all loaded extensions that support setCMSContext
-          Object.keys(config.extensions).forEach(extensionName => {
-            if (window.TipTapExtensions && window.TipTapExtensions[extensionName]) {
-              const ExtensionClass = window.TipTapExtensions[extensionName];
-              if (typeof ExtensionClass.setCMSContext === 'function') {
-                ExtensionClass.setCMSContext(context);
-              }
-            }
-          });
-        }
+        const registry = this.getCapabilityRegistry();
+        Object.keys(registry.tools).forEach((action) => {
+          registry.tools[action].setContext({ context });
+        });
       },
 
       /**

@@ -15,6 +15,16 @@ if (!window.TipTapExtensions) {
 
 const $ = window.jQuery;
 window.TipTapExtensions['ss-link'] = {
+    action: 'ss-link',
+
+    getToolbarConfig: function ({ tooltips }) {
+        return {
+            type: 'button',
+            title: (tooltips && tooltips['ss-link']) || 'Link',
+            action: 'ss-link',
+            extension: 'custom',
+        };
+    },
 
     /**
      * Initialize the extension
@@ -74,6 +84,10 @@ window.TipTapExtensions['ss-link'] = {
         });
 
         return button;
+    },
+
+    run: function ({ editor, host }) {
+        this.openLinkDialog(editor, this.config || {}, host);
     },
 
     /**

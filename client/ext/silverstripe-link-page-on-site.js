@@ -11,6 +11,16 @@ if (!window.TipTapExtensions) {
 
 const $ = window.jQuery;
 window.TipTapExtensions['ss-link-site'] = {
+    action: 'ss-link-site',
+
+    getToolbarConfig: function ({ tooltips }) {
+        return {
+            type: 'button',
+            title: (tooltips && tooltips['ss-link-site']) || 'Page Link',
+            action: 'ss-link-site',
+            extension: 'custom',
+        };
+    },
 
     /**
      * Initialize the extension
@@ -51,6 +61,10 @@ window.TipTapExtensions['ss-link-site'] = {
             // Fallback to simple prompt
             this.openSimpleDialog(editor, selectedText);
         }
+    },
+
+    run: function ({ editor, host }) {
+        this.onClick(editor, this.config || {}, host);
     },
 
     /**

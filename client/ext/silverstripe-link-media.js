@@ -12,6 +12,16 @@ if (!window.TipTapExtensions) {
 }
 
 window.TipTapExtensions['ss-link-media'] = {
+    action: 'ss-link-media',
+
+    getToolbarConfig: function ({ tooltips }) {
+        return {
+            type: 'button',
+            title: (tooltips && tooltips['ss-link-media']) || 'Media',
+            action: 'ss-link-media',
+            extension: 'custom',
+        };
+    },
 
     /**
      * Initialize the extension
@@ -56,6 +66,10 @@ window.TipTapExtensions['ss-link-media'] = {
         const selectedText = editor.state.doc.textBetween(from, to, '');
 
         this.openFileLinkDialog(editor, selectedText);
+    },
+
+    run: function ({ editor, host }) {
+        this.onClick(editor, this.config || {}, host);
     },
 
     /**
@@ -266,7 +280,7 @@ window.TipTapExtensions['ss-link-media'] = {
      * @param {string} content - HTML/source content
      * @returns {string} Normalized content
      */
-    normalizeContentForTiptap: function (content) {
+    normalizeContent: function (content) {
         if (!content || typeof content !== 'string') {
             return content;
         }
