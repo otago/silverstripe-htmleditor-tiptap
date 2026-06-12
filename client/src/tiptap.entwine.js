@@ -14,6 +14,8 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import screenfull from 'screenfull';
+
+// Import tools to register in the toolbar
 import alignCenter from './tools/alignCenter';
 import alignJustify from './tools/alignJustify';
 import alignLeft from './tools/alignLeft';
@@ -38,6 +40,7 @@ import link from './tools/link';
 import orderedList from './tools/orderedList';
 import paragraph from './tools/paragraph';
 import redo from './tools/redo';
+import removeLink from './tools/removeLink';
 import styles from './tools/styles';
 import subscript from './tools/subscript';
 import superscript from './tools/superscript';
@@ -79,6 +82,7 @@ const TOOLS = [
   subscript,
   superscript,
   link,
+  removeLink,
   image,
   undo,
   redo,
@@ -86,43 +90,6 @@ const TOOLS = [
   htmlSource,
   table,
 ];
-
-const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => {
-  const styleClass = btn.attr('data-style-class');
-  const optionAction = btn.attr('data-option-action');
-  const parentAction = btn.attr('data-parent-action');
-
-  btn.removeClass(`${constants.CSS_CLASSES.ACTIVE} ${constants.CSS_CLASSES.DISABLED}`);
-
-  if (styleClass) {
-    btn.toggleClass(constants.CSS_CLASSES.ACTIVE, editor.isActive('textStyle', { class: styleClass }));
-    btn.toggleClass(constants.CSS_CLASSES.DISABLED, !editor.can().setMark('textStyle', { class: styleClass }));
-    return;
-  }
-
-  if (!optionAction) {
-    return;
-  }
-
-  const parentCapability = parentAction ? resolveCapability(parentAction) : null;
-  if (parentCapability) {
-    btn.toggleClass(
-      constants.CSS_CLASSES.ACTIVE,
-      parentCapability.isOptionActive({ optionAction, editor })
-    );
-    btn.toggleClass(
-      constants.CSS_CLASSES.DISABLED,
-      parentCapability.isOptionDisabled({ optionAction, editor })
-    );
-    return;
-  }
-
-  const optionCapability = resolveCapability(optionAction);
-  if (optionCapability) {
-    btn.toggleClass(constants.CSS_CLASSES.ACTIVE, optionCapability.isActive({ editor }));
-    btn.toggleClass(constants.CSS_CLASSES.DISABLED, optionCapability.isDisabled({ editor }));
-  }
-};
 
 (function ($) {
   // Configuration constants
@@ -165,14 +132,6 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
       TOOLTIP: 1001,
       SUBMENU: 1002
     },
-
-    // Error messages
-    ERROR_MESSAGES: {
-      INVALID_JSON: 'Invalid JSON in TipTap config:',
-      NO_CONFIG: 'TipTap: No config provided. Make sure TipTapFieldExtension is properly configured.',
-      EXTENSION_NOT_FOUND: 'TipTap Extension not found:',
-      EXTENSION_INIT_ERROR: 'Error initializing TipTap extension:'
-    }
   };
 
   $.entwine('ss', function ($) {
@@ -189,94 +148,23 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
             config = JSON.parse(this.data('config') || '{}');
           }
         } catch (e) {
-          console.warn(CONSTANTS.ERROR_MESSAGES.INVALID_JSON, e);
+          console.warn('Invalid JSON in TipTap config:', e);
           config = {};
         }
 
         // Config should always be provided by PHP extension from YML
         if (Object.keys(config).length === 0) {
-          console.error(CONSTANTS.ERROR_MESSAGES.NO_CONFIG);
+          console.error('TipTap: No config provided. Make sure TipTapFieldExtension is properly configured.');
           return;
         }
 
-        this.data('tiptap-capabilities', this.buildCapabilityRegistry(config));
+        this.data('tiptap-tools', this.buildToolRegistry(config));
 
         if (!this.data('tiptap-initialized')) {
           // Create wrapper div for the editor
           const wrapper = $(`<div class="${CONSTANTS.CSS_CLASSES.WRAPPER}"></div>`);
           this.after(wrapper);
           this.hide();
-
-          // below is the event to trigger the redux form, for the elmental forms.
-          const textareaElement = this[0];
-          const textareaName = this.attr('name') || '';
-          const textareaValueSetter = Object.getOwnPropertyDescriptor(
-            window.HTMLTextAreaElement.prototype,
-            'value'
-          )?.set;
-
-          const findElementReduxFormName = () => {
-            const store = window.ss && window.ss.store;
-            if (!store || !textareaName) {
-              return null;
-            }
-
-            const elementForms = store.getState()?.form?.formState?.element || {};
-            const entries = Object.entries(elementForms);
-
-            for (let i = 0; i < entries.length; i++) {
-              const [formName, formState] = entries[i];
-              const registeredFields = formState?.registeredFields || {};
-              const values = formState?.values || {};
-              if (
-                Object.prototype.hasOwnProperty.call(registeredFields, textareaName)
-                || Object.prototype.hasOwnProperty.call(values, textareaName)
-              ) {
-                return formName;
-              }
-            }
-
-            return null;
-          };
-
-          const dispatchReduxFormChange = (html) => {
-            const store = window.ss && window.ss.store;
-            if (!store || !textareaName) {
-              return;
-            }
-
-            const formName = findElementReduxFormName();
-            if (!formName) {
-              return;
-            }
-
-            const reduxFormName = `element.${formName}`;
-            store.dispatch({
-              type: '@@redux-form/CHANGE',
-              meta: {
-                form: reduxFormName,
-                field: textareaName,
-                touch: true,
-                persistentSubmitErrors: false,
-              },
-              payload: html,
-            });
-          };
-
-          const syncEditorToTextarea = (editorInstance) => {
-            const html = editorInstance.getHTML();
-
-            if (textareaElement) {
-              if (textareaValueSetter) {
-                textareaValueSetter.call(textareaElement, html);
-              } else {
-                textareaElement.value = html;
-              }
-            }
-
-            this.val(html);
-            dispatchReduxFormChange(html);
-          };
 
           // Configure all available extensions
           const extensions = [
@@ -358,7 +246,8 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
             content: initialContent,
             autofocus: config.autofocus || false,
             onUpdate: ({ editor }) => {
-              syncEditorToTextarea(editor);
+              const html = editor.getHTML();
+              this.dispatchReduxFormChange(html);
             },
             onCreate: ({ editor }) => {
 
@@ -459,99 +348,8 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
         this._super();
       },
 
-      // Generate style options from config, supporting nested groups
-      generateStyleOptions: function (stylesConfig) {
-        const options = [];
-
-        const processStyleItem = (item, parentPath = '') => {
-          if (item.children && Array.isArray(item.children)) {
-            // This is a group - add group item and process children
-            const groupItem = {
-              type: 'group',
-              text: item.title || item.text || 'Group',
-              isGroup: true,
-              children: []
-            };
-
-            // Process children
-            item.children.forEach(child => {
-              if (!child.children || !Array.isArray(child.children)) {
-                // This is a style item
-                const styleItem = {
-                  type: 'style',
-                  text: child.title || child.text || 'Style',
-                  className: child.className || child.class || '',
-                  previewClass: child.previewClass || child.className || child.class || '',
-                  isStyle: true
-                };
-                groupItem.children.push(styleItem);
-              }
-            });
-
-            options.push(groupItem);
-          } else {
-            // This is a style item
-            const styleItem = {
-              type: 'style',
-              text: item.title || item.text || 'Style',
-              className: item.className || item.class || '',
-              previewClass: item.previewClass || item.className || item.class || '',
-              isStyle: true
-            };
-            options.push(styleItem);
-          }
-        };
-
-        // Process the styles config
-        if (Array.isArray(stylesConfig)) {
-          stylesConfig.forEach(item => processStyleItem(item));
-        } else {
-          // Handle object-based config
-          Object.keys(stylesConfig).forEach(key => {
-            const item = stylesConfig[key];
-            if (typeof item === 'object') {
-              processStyleItem({ ...item, key });
-            }
-          });
-        }
-
-        // no style options? give them some example common classnames
-        if (!options.length) {
-          return [{
-            type: 'group',
-            text: 'Alerts',
-            isGroup: true,
-            children: [{
-              type: 'style',
-              text: 'Error',
-              className: 'alert-error',
-              previewClass: 'alert-error-preview',
-              isStyle: true
-            }, {
-              type: 'style',
-              text: 'Info',
-              className: 'alert-info',
-              previewClass: 'alert-info-preview',
-              isStyle: true
-            }, {
-              type: 'style',
-              text: 'Success',
-              className: 'alert-success',
-              previewClass: 'alert-success-preview',
-              isStyle: true
-            },]
-          }, {
-            type: 'style',
-            text: 'Highlight',
-            className: 'text-highlight',
-            previewClass: 'text-highlight-preview',
-            isStyle: true
-          }];
-        }
-        return options;
-      },
-
-      buildCapabilityRegistry: function (config) {
+      // create a list of avalible tools to use
+      buildToolRegistry: function (config) {
         const tools = {};
         TOOLS.forEach((tool) => {
           tools[tool.action] = tool;
@@ -567,51 +365,13 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
         return { tools };
       },
 
-      getCapabilityRegistry: function () {
-        return this.data('tiptap-capabilities') || { tools: {} };
+      getToolRegistry: function () {
+        return this.data('tiptap-tools') || { tools: {} };
       },
 
-      getCapability: function (action) {
-        const registry = this.getCapabilityRegistry();
+      getTool: function (action) {
+        const registry = this.getToolRegistry();
         return registry.tools[action] || null;
-      },
-
-      // Get available toolbar items configuration
-      getToolbarItemsConfig: function (config) {
-        // Get tooltips from config (provided by PHP extension)
-        const tooltips = config.tooltips || {};
-
-        // Generate styles options from config
-        const styleOptions = this.generateStyleOptions(config.styles || {});
-        const registry = this.getCapabilityRegistry();
-
-        const toolbarConfig = {};
-        Object.keys(registry.tools).forEach((action) => {
-          if (toolbarConfig[action]) {
-            return;
-          }
-
-          const capability = registry.tools[action];
-
-          if (typeof capability.getConfig === 'function') {
-            const item = capability.getConfig({ tooltips, styleOptions });
-            if (item) {
-              toolbarConfig[action] = item;
-            }
-          }
-        });
-
-        toolbarConfig.dropdown = {
-          type: 'dropdown',
-          title: 'Dropdown',
-          action: 'dropdown',
-          extension: 'custom',
-          options: [],
-        };
-        toolbarConfig.newline = { type: 'newline' };
-        toolbarConfig.separator = { type: 'separator' };
-
-        return toolbarConfig;
       },
 
       // Helper method to create a configurable toolbar
@@ -619,7 +379,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
         const toolbar = $(`<div class="${CONSTANTS.CSS_CLASSES.TOOLBAR}"></div>`);
 
         // Process extensions first
-        this.createToolbarProcessExtensions(config, editor);
+        this.initializeExtensions(editor, config);
 
         // Build toolbar items
         this.createToolbarItems(toolbar, config, editor);
@@ -628,24 +388,23 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
         this.createToolbarEventListeners(wrapper, toolbar, editor);
       },
 
-      // Process extensions for toolbar
-      createToolbarProcessExtensions: function (config, editor) {
-        this.initializeExtensions(editor, config);
-      },
 
       // Build toolbar items based on configuration
       createToolbarItems: function (toolbar, config, editor) {
-        const toolbarConfig = this.getToolbarItemsConfig(config);
         const toolbarLayout = config.toolbar || [];
-        const registry = this.getCapabilityRegistry();
+        const registry = this.getToolRegistry();
 
-        // Build toolbar based on configuration
+        // Build toolbar based on configuration. if the extension has getToolbarConfig(), it can be something other than a button.
         toolbarLayout.forEach(item => {
-          let itemConfig = toolbarConfig[item];
+          let itemConfig = null;
 
           if (registry.tools[item] && typeof registry.tools[item].getToolbarConfig === 'function') {
-            itemConfig = registry.tools[item].getToolbarConfig({ tooltips: config.tooltips, styleOptions: this.generateStyleOptions(config.styles || {}) });
+            itemConfig = registry.tools[item].getToolbarConfig({ tooltips: config.tooltips });
           }
+          if (registry.tools[item] && typeof registry.tools[item].setConfigOptions === 'function') {
+            registry.tools[item].setConfigOptions(config.styles || {});
+          }
+
           // Handle grouped objects (like dropdown: { title: 'Links', icon: 'links', actions: [...] })
           if (typeof item === 'object' && item !== null) {
             toolbar.append(this.createGenericDropdown(item, itemConfig, editor, config));
@@ -656,27 +415,24 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
           if (!itemConfig) {
             let buttontitle = config.tooltips && config.tooltips[item] ? config.tooltips[item] : item;
 
-            const itemConfig = {
+            itemConfig = {
               action: item,
               extension: item,
               title: buttontitle, // Full text with shortcuts for tooltip
               type: "button",
               buttontext: '' // Just the title part for button text
             };
-            const button = this.createToolbarButton(itemConfig, editor);
-            toolbar.append(button);
-            return;
           }
 
-          if (itemConfig.type === 'separator') {
-            // Add separator
+          // Add separator
+          if (itemConfig.action === 'separator') {
             const separator = $(`<div class="${CONSTANTS.CSS_CLASSES.SEPARATOR}"></div>`);
             toolbar.append(separator);
             return;
           }
 
-          if (itemConfig.type === 'newline') {
-            // Add line break - force wrap to new line
+          // Add line break - force wrap to new line
+          if (itemConfig.action === 'newline') {
             const lineBreak = $(`<div class="${CONSTANTS.CSS_CLASSES.NEWLINE}"></div>`);
             toolbar.append(lineBreak);
             return;
@@ -690,7 +446,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
           } else if (itemConfig.type === 'dropdown') {
             //  Create dropdown
             //  For extension dropdowns, pass the toolbarConfig and itemName for context
-            const dropdown = this.createToolbarDropdown(itemConfig, editor, toolbarConfig[item]);
+            const dropdown = this.createToolbarDropdown(itemConfig, editor);
             toolbar.append(dropdown);
           }
         });
@@ -709,25 +465,28 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
 
       // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
       normalizeContent: function (content) {
-        const registry = this.getCapabilityRegistry();
-        return Object.keys(registry.tools).reduce((acc, action) => {
-          const capability = registry.tools[action];
-          if (typeof capability.normalizeContent === 'function') {
-            return capability.normalizeContent({ content: acc });
+        const registry = this.getToolRegistry();
+        let normalizedContent = content;
+
+        Object.keys(registry.tools).forEach((action) => {
+          const tool = registry.tools[action];
+          if (typeof tool.normalizeContent == 'function') {
+            normalizedContent = tool.normalizeContent(normalizedContent);
           }
-        }, content);
+        });
+
+        return normalizedContent;
       },
 
       // Initialize extensions
       initializeExtensions: function (editor, config) {
-        const registry = this.getCapabilityRegistry();
+        const registry = this.getToolRegistry();
         Object.keys(registry.tools).forEach((action) => {
           const capability = registry.tools[action];
           if (typeof capability.init === 'function') {
             capability.init({ editor, config, host: this });
           }
           if (typeof capability.setContext === 'function') {
-            //capability.init({ editor, config, host: this });
             capability.setContext({ context: this.getCMSContext() });
           }
         });
@@ -768,7 +527,6 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
 
       // Create generic dropdown for grouped objects
       createGenericDropdown: function (item, dropdownConfig, editor, config) {
-        console.log('createGenericDropdown', item);
 
         const dropdown = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
         const button = $(`<button type="button" data-action="${item.title}" class="${item.icon}"></button>`);
@@ -815,23 +573,17 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
         const button = $(`<button type="button" data-action="${itemConfig.action}">${itemConfig.buttontext}</button>`);
         const self = this;
 
-        // Add tooltip functionality
         this.addTooltip(button, itemConfig.title);
 
         // on button click
         button.on('click', (e) => {
-          console.log('gsdfds?');
           e.preventDefault();
 
-          // Check if button is disabled
           if (button.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
             return;
           }
 
-
-          const config = this.data('tiptap-config') || {};
-          const capability = this.getCapability(itemConfig.action, !!(config.extensions && config.extensions[itemConfig.action]));
-          console.log('capability', capability, itemConfig.action);
+          const capability = this.getTool(itemConfig.action);
           if (capability) {
             capability.run({
               editor,
@@ -843,7 +595,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
                 constants: CONSTANTS,
                 normalizeContent: (html) => this.normalizeContent(html),
                 autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
-                generateStyleOptions: (styles) => this.generateStyleOptions(styles),
+                dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change),
               },
             });
           }
@@ -858,13 +610,12 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
       },
 
       // Create a toolbar dropdown
-      createToolbarDropdown: function (itemConfig, editor, toolbarConfig) {
+      createToolbarDropdown: function (itemConfig, editor) {
         const dropdown = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
         const button = $(`<button type="button" data-action="${itemConfig.action}"></button>`);
         const dropdownMenu = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
         const self = this;
-        const config = this.data('tiptap-config') || {};
-        const capability = this.getCapability(itemConfig.action, !!(config.extensions && config.extensions[itemConfig.action]));
+        const capability = this.getTool(itemConfig.action);
 
         // Add special class for table dropdown to allow wider styling
         if (itemConfig.type === 'dropdown') {
@@ -903,7 +654,6 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
             this.addTooltip(optionBtn, option.text);
 
             optionBtn.on('click', (e) => {
-              console.log('here?');
               e.preventDefault();
               e.stopPropagation();
 
@@ -912,7 +662,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
                 return;
               }
 
-              const parentCapability = this.getCapability(itemConfig.action);
+              const parentCapability = this.getTool(itemConfig.action);
               if (parentCapability && typeof parentCapability.runOption === 'function') {
                 parentCapability.runOption({
                   optionAction,
@@ -924,7 +674,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
                   },
                 });
               } else if (optionAction) {
-                const optionCapability = this.getCapability(optionAction, !!(config.extensions && config.extensions[optionAction]));
+                const optionCapability = this.getTool(optionAction);
                 if (optionCapability) {
                   optionCapability.run({
                     editor,
@@ -941,7 +691,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
                       constants: CONSTANTS,
                       normalizeContent: (html) => this.normalizeContent(html),
                       autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
-                      generateStyleOptions: (styles) => this.generateStyleOptions(styles),
+                      dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change),
                     },
                   });
                 }
@@ -995,17 +745,15 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
 
       // Update toolbar button states
       updateToolbarStates: function (toolbar, editor) {
-        const config = this.data('tiptap-config') || {};
-
         // Update main toolbar buttons
-        this.updateToolbarMainButtons(toolbar, editor, config);
+        this.updateToolbarMainButtons(toolbar, editor);
 
         // Update dropdown menu options
         this.updateToolbarDropdownButtons(toolbar, editor);
       },
 
       // Update main toolbar button states
-      updateToolbarMainButtons: function (toolbar, editor, config) {
+      updateToolbarMainButtons: function (toolbar, editor) {
         const self = this;
 
         toolbar.find('button[data-action]').each(function () {
@@ -1016,36 +764,77 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
           btn.removeClass(`${CONSTANTS.CSS_CLASSES.ACTIVE} ${CONSTANTS.CSS_CLASSES.DISABLED}`);
 
           // Handle built-in actions
-          self.updateToolbarButtonState(btn, action, editor, config);
+          self.updateToolbarButtonState(btn, action, editor);
         });
       },
 
       // Update individual button state based on action
-      updateToolbarButtonState: function (button, action, editor, config) {
-        const capability = this.getCapability(action, !!(config.extensions && config.extensions[action]));
-        if (!capability) {
-          return;
-        }
-        if (typeof capability.isActive === 'function') {
-          button.toggleClass(CONSTANTS.CSS_CLASSES.ACTIVE, capability.isActive(editor));
-        }
-        if (typeof capability.isDisabled === 'function') {
-          button.toggleClass(CONSTANTS.CSS_CLASSES.DISABLED, capability.isDisabled(editor));
-        }
+      updateToolbarButtonState: function (button, action, editor) {
+        const capability = this.getTool(action);
+        this.applyCapabilityButtonState(button, capability, editor, CONSTANTS);
       },
 
       // Update dropdown menu button states
       updateToolbarDropdownButtons: function (toolbar, editor) {
-        const config = this.data('tiptap-config') || {};
         toolbar.find('.dropdown-menu button').each(function () {
           const btn = $(this);
-          applyDropdownButtonState(btn, editor, CONSTANTS, (action) => {
+          this.applyDropdownButtonState(btn, editor, CONSTANTS, (action) => {
             if (!action) {
               return null;
             }
-            return this.getCapability(action, !!(config.extensions && config.extensions[action]));
+            return this.getTool(action);
           });
         }.bind(this));
+      },
+
+      applyCapabilityButtonState: function (btn, capability, editor, constants) {
+        if (!capability) {
+          return;
+        }
+
+        if (typeof capability.isActive === 'function') {
+          const active = capability.isActive(editor);
+          btn.toggleClass(constants.CSS_CLASSES.ACTIVE, !!active);
+        }
+
+        if (typeof capability.isDisabled === 'function') {
+          const disabled = capability.isDisabled(editor);
+          btn.toggleClass(constants.CSS_CLASSES.DISABLED, !!disabled);
+        }
+      },
+
+      applyDropdownButtonState: function (btn, editor, constants, resolveCapability) {
+        const styleClass = btn.attr('data-style-class');
+        const optionAction = btn.attr('data-option-action');
+        const parentAction = btn.attr('data-parent-action');
+
+        btn.removeClass(`${constants.CSS_CLASSES.ACTIVE} ${constants.CSS_CLASSES.DISABLED}`);
+
+        if (styleClass) {
+          btn.toggleClass(constants.CSS_CLASSES.ACTIVE, editor.isActive('textStyle', { class: styleClass }));
+          btn.toggleClass(constants.CSS_CLASSES.DISABLED, !editor.can().setMark('textStyle', { class: styleClass }));
+          return;
+        }
+
+        if (!optionAction) {
+          return;
+        }
+
+        const parentCapability = parentAction ? resolveCapability(parentAction) : null;
+        if (parentCapability) {
+          btn.toggleClass(
+            constants.CSS_CLASSES.ACTIVE,
+            parentCapability.isOptionActive({ optionAction, editor })
+          );
+          btn.toggleClass(
+            constants.CSS_CLASSES.DISABLED,
+            parentCapability.isOptionDisabled({ optionAction, editor })
+          );
+          return;
+        }
+
+        const optionCapability = resolveCapability(optionAction);
+        this.applyCapabilityButtonState(btn, optionCapability, editor, constants);
       },
 
       // Add tooltip functionality to a button
@@ -1154,6 +943,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
               constants: CONSTANTS,
               normalizeContent: (html) => this.normalizeContent(html),
               autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
+              dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change),
             });
           }
 
@@ -1190,6 +980,68 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
                 break;
             }
           }
+        });
+      },
+
+      findElementReduxFormName: function () {
+        const store = window.ss && window.ss.store;
+        const textareaName = this.attr('name');
+        if (!store || !textareaName) {
+          return null;
+        }
+
+        const elementForms = store.getState()?.form?.formState?.element || {};
+        const entries = Object.entries(elementForms);
+
+        for (let i = 0; i < entries.length; i++) {
+          const [formName, formState] = entries[i];
+          const registeredFields = formState?.registeredFields || {};
+          const values = formState?.values || {};
+          if (
+            Object.prototype.hasOwnProperty.call(registeredFields, textareaName)
+            || Object.prototype.hasOwnProperty.call(values, textareaName)
+          ) {
+            return formName;
+          }
+        }
+
+        return null;
+      },
+
+      dispatchReduxFormChange: function (html) {
+        // below is the event to trigger the redux form, for the elmental forms.
+        const textareaElement = this[0];
+        const textareaValueSetter = Object.getOwnPropertyDescriptor(
+          window.HTMLTextAreaElement.prototype,
+          'value'
+        )?.set;
+        if (textareaElement) {
+          if (textareaValueSetter) {
+            textareaValueSetter.call(textareaElement, html);
+          } else {
+            textareaElement.value = html;
+          }
+        }
+
+        this.val(html);
+
+        const store = window.ss && window.ss.store;
+
+        const formName = this.findElementReduxFormName();
+        if (!formName) {
+          return;
+        }
+
+        const reduxFormName = `element.${formName}`;
+        store.dispatch({
+          type: '@@redux-form/CHANGE',
+          meta: {
+            form: reduxFormName,
+            field: this.attr('name') || '',
+            touch: true,
+            persistentSubmitErrors: false,
+          },
+          payload: html,
         });
       },
 
@@ -1237,7 +1089,7 @@ const applyDropdownButtonState = (btn, editor, constants, resolveCapability) => 
         // Store context on the entwine instance
         this.data('tiptap-cms-context', context);
 
-        const registry = this.getCapabilityRegistry();
+        const registry = this.getToolRegistry();
         Object.keys(registry.tools).forEach((action) => {
           registry.tools[action].setContext({ context });
         });

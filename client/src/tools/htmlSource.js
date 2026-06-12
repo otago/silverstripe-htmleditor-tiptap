@@ -147,7 +147,14 @@ class HtmlSourceModeHelper {
 const helper = new HtmlSourceModeHelper();
 
 export function enterHtmlSource(editor, wrapper, context) {
-  const { $, constants, autoResizeTextarea } = context;
+  const {
+    $,
+    constants,
+    autoResizeTextarea,
+    //normalizeContent,
+    dispatchReduxFormChange,
+  //  syncParentContent,
+  } = context;
   const proseMirrorElement = wrapper.find(`.${constants.CSS_CLASSES.PROSEMIRROR}`);
   const currentHtml = editor.getHTML();
   const formattedHtml = helper.formatHtmlForSourceView(currentHtml);
@@ -160,11 +167,11 @@ export function enterHtmlSource(editor, wrapper, context) {
 
   wrapper.addClass(constants.CSS_CLASSES.HTML_SOURCE);
 
+  console.log('enterHtmlSource');
   autoResizeTextarea(htmlTextarea);
   htmlTextarea.on('input', () => {
-    autoResizeTextarea(htmlTextarea);
+    dispatchReduxFormChange(htmlTextarea.val());
   });
-
   helper.attachKeyGuard(wrapper, htmlTextarea);
 
   htmlTextarea.focus();
@@ -228,11 +235,10 @@ const htmlSourceTool = {
   run({ editor, button, context }) {
     toggleHtmlSource(editor, button, context);
   },
-  isActive({ button, context }) {
-    const wrapper = button.closest(`.${context.constants.CSS_CLASSES.WRAPPER}`);
-    return wrapper.hasClass(context.constants.CSS_CLASSES.HTML_SOURCE);
+  isActive(editor) {
+    return !!$(editor.view.dom).siblings('textarea').length;
   },
-  isDisabled() {
+  isDisabled(editor) {
     return false;
   },
 };

@@ -624,23 +624,36 @@ window.TipTapExtensions['ss-link-site'] = {
                 linkAttributes.target = '_blank';
                 linkAttributes.rel = 'noopener noreferrer'; // Security best practice
             }
-            
-            // If no text is selected, use the URL as text
-            if (!selectedText) {
-                let linkHtml = `<a href="${url}"`;
-                if (description) {
-                    linkHtml += ` title="${description.replace(/"/g, '&quot;')}"`;
-                }
-                if (openInNewWindow) {
-                    linkHtml += ` target="_blank" rel="noopener noreferrer"`;
-                }
-                linkHtml += `>${url}</a>`;
-                
-                editor.chain().focus().insertContent(linkHtml).run();
-            } else {
-                // Apply link to selected text
-                editor.chain().focus().setLink(linkAttributes).run();
+
+            const { from, to, empty } = editor.state.selection;
+            const textValue = (selectedText || '').trim();
+
+            // No active selection: append a new linked paragraph at the bottom.
+            if (empty) {
+                const endPos = editor.state.doc.content.size;
+                editor.chain().focus().insertContentAt(endPos, {
+                    type: 'paragraph',
+                    content: [{
+                        type: 'text',
+                        marks: [{ type: 'link', attrs: linkAttributes }],
+                        text: textValue || url,
+                    }],
+                }).run();
+                return;
             }
+
+            // Selection exists and custom text provided: replace selection with linked text.
+            if (textValue) {
+                editor.chain().focus().insertContentAt({ from, to }, {
+                    type: 'text',
+                    marks: [{ type: 'link', attrs: linkAttributes }],
+                    text: textValue,
+                }).run();
+                return;
+            }
+
+            // Selection exists and no custom text: link existing selected text.
+            editor.chain().focus().setLink(linkAttributes).run();
         } else {
             // Remove link if URL is empty
             editor.chain().focus().unsetLink().run();

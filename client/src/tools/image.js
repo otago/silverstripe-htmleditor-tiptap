@@ -16,7 +16,7 @@ const imageTool = {
 
     editor.chain().focus().setImage({ src }).run();
   },
-  isActive() {
+  isActive(editor) {
     return false;
   },
   isDisabled(editor) {

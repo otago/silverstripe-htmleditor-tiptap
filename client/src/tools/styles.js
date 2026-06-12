@@ -1,3 +1,5 @@
+// styles dropdown. handles the dropdown, and the complicated nature of preselecting an area if you've allready set a style
+
 const isAnyStyleActive = (editor, options = []) => {
   const walk = (list) => list.some((option) => {
     if (option.isStyle && option.className) {
@@ -137,30 +139,122 @@ const createStyleGroup = ({ option, editor, dropdown, dropdownMenu, context }) =
   return groupItem;
 };
 
+// Generate style options from config, supporting nested groups
+function generateStyleOptions(stylesConfig) {
+  const options = [];
+
+  const processStyleItem = (item, parentPath = '') => {
+    if (item.children && Array.isArray(item.children)) {
+      // This is a group - add group item and process children
+      const groupItem = {
+        type: 'group',
+        text: item.title || item.text || 'Group',
+        isGroup: true,
+        children: []
+      };
+
+      // Process children
+      item.children.forEach(child => {
+        if (!child.children || !Array.isArray(child.children)) {
+          // This is a style item
+          const styleItem = {
+            type: 'style',
+            text: child.title || child.text || 'Style',
+            className: child.className || child.class || '',
+            previewClass: child.previewClass || child.className || child.class || '',
+            isStyle: true
+          };
+          groupItem.children.push(styleItem);
+        }
+      });
+
+      options.push(groupItem);
+    } else {
+      // This is a style item
+      const styleItem = {
+        type: 'style',
+        text: item.title || item.text || 'Style',
+        className: item.className || item.class || '',
+        previewClass: item.previewClass || item.className || item.class || '',
+        isStyle: true
+      };
+      options.push(styleItem);
+    }
+  };
+
+  // Process the styles config
+  if (Array.isArray(stylesConfig)) {
+    stylesConfig.forEach(item => processStyleItem(item));
+  } else {
+    // Handle object-based config
+    Object.keys(stylesConfig).forEach(key => {
+      const item = stylesConfig[key];
+      if (typeof item === 'object') {
+        processStyleItem({ ...item, key });
+      }
+    });
+  }
+
+  // no style options? give them some example common classnames
+  if (!options.length) {
+    return [{
+      type: 'group',
+      text: 'Alerts',
+      isGroup: true,
+      children: [{
+        type: 'style',
+        text: 'Error',
+        className: 'alert-error',
+        previewClass: 'alert-error-preview',
+        isStyle: true
+      }, {
+        type: 'style',
+        text: 'Info',
+        className: 'alert-info',
+        previewClass: 'alert-info-preview',
+        isStyle: true
+      }, {
+        type: 'style',
+        text: 'Success',
+        className: 'alert-success',
+        previewClass: 'alert-success-preview',
+        isStyle: true
+      },]
+    }, {
+      type: 'style',
+      text: 'Highlight',
+      className: 'text-highlight',
+      previewClass: 'text-highlight-preview',
+      isStyle: true
+    }];
+  }
+  return options;
+};
+
+
 const stylesTool = {
   action: 'styles',
-  getToolbarConfig({ tooltips, styleOptions }) {
+  getToolbarConfig({ tooltips }) {
+    this.styleOptions = [];
     return {
       type: 'dropdown',
       title: tooltips.styles || 'Styles',
       action: 'styles',
       extension: 'textStyle',
-      options: styleOptions,
     };
   },
-  isActive(editor, config, context) {
-    const styleOptions = context.generateStyleOptions(config.styles || {});
-    return isAnyStyleActive(editor, styleOptions);
+  setConfigOptions( styleOptions) {
+    this.styleOptions = generateStyleOptions(styleOptions);
+  },
+  isActive(editor) {
+    return isAnyStyleActive(editor, this.styleOptions);
   },
   isDisabled(editor) {
     return !editor.can().setMark('textStyle');
   },
   renderDropdownOptions({ itemConfig, dropdown, dropdownMenu, editor, context }) {
-    if (itemConfig.action !== 'styles' || !Array.isArray(itemConfig.options)) {
-      return false;
-    }
 
-    itemConfig.options.forEach((option) => {
+    this.styleOptions.forEach((option) => {
       if (option.isGroup) {
         dropdownMenu.append(createStyleGroup({
           option,

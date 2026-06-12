@@ -23,10 +23,10 @@ const fullscreenTool = {
 
     screenfull.request(wrapper);
   },
-  isActive() {
+  isActive(editor) {
     return screenfull.isEnabled ? screenfull.isFullscreen : false;
   },
-  isDisabled() {
+  isDisabled(editor) {
     return !screenfull.isEnabled;
   },
 };
