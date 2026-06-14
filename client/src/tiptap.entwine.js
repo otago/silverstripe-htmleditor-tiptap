@@ -14,6 +14,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import screenfull from 'screenfull';
+import InternalAnchor from './InternalAnchor';
 
 // Import tools to register in the toolbar
 import alignCenter from './tools/alignCenter';
@@ -90,6 +91,7 @@ const TOOLS = [
   htmlSource,
   table,
 ];
+
 
 (function ($) {
   // Configuration constants
@@ -178,6 +180,7 @@ const TOOLS = [
             Underline,
             Image,
             Highlight,
+            InternalAnchor,
             Link.configure({
               openOnClick: false,
               HTMLAttributes: {

@@ -808,6 +808,26 @@ for the lists dropdown
   color: #1565c0;
 }
 
+.tiptap-wrapper .ProseMirror a[id]:empty:not([href]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0 0.15em;
+  border: 1px dashed #1976d2;
+  border-radius: 2px;
+  text-decoration: none;
+  vertical-align: text-bottom;
+}
+
+.tiptap-wrapper .ProseMirror a[id]:empty:not([href])::before {
+  content: "\2693";
+  font-size: 0.72em;
+  line-height: 1;
+  color: #1976d2;
+}
+
 /* Strong and emphasis */
 .tiptap-wrapper .ProseMirror strong {
   font-weight: 600;

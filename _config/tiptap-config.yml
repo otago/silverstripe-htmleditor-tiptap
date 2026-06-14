@@ -12,7 +12,7 @@ SilverStripe\Admin\LeftAndMain:
 SilverStripe\Forms\HTMLEditor\HTMLEditorField:
   extensions:
     - OP\TipTapFieldExtension
-  tiptap_config:
+  tiptap_config_initial:
     # Toolbar layout - order matters
     toolbar:
       - 'undo'
@@ -68,6 +68,8 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorField:
         - 'ss-link-site': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-page-on-site.js'
         - 'ss-link-ext': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-external.js'
         - 'ss-link-file': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-file.js'
+        - 'removelink'
+        - 'ss-link-anchor': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-anchor.js'
 
     # Heading configuration
     headingLevels:

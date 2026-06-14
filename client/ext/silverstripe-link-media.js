@@ -230,16 +230,14 @@ window.TipTapExtensions['ss-link-media'] = {
             }
 
             // Check if it's a file link shortcode
-            if (window.ShortcodeSerialiser) {
-                const shortcode = window.ShortcodeSerialiser.match('file_link', false, hrefParts[0]);
-                if (shortcode) {
-                    return {
-                        ID: shortcode.properties.id ? parseInt(shortcode.properties.id, 10) : 0,
-                        Anchor: hrefParts[1] || '',
-                        Description: currentLink.title || '',
-                        TargetBlank: currentLink.target === '_blank',
-                    };
-                }
+            const shortcodeIdMatch = hrefParts[0].match(/\[file_link,\s*id\s*=\s*(\d+)\]/i);
+            if (shortcodeIdMatch) {
+                return {
+                    ID: parseInt(shortcodeIdMatch[1], 10) || 0,
+                    Anchor: hrefParts[1] || '',
+                    Description: currentLink.title || '',
+                    TargetBlank: currentLink.target === '_blank',
+                };
             }
 
             // Fallback for direct URLs

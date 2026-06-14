@@ -76,7 +76,14 @@ class TipTapFieldExtension extends Extension
      */
     public function getTipTapConfig()
     {
-        $config = Config::inst()->get(HTMLEditorField::class, 'tiptap_config') ?: [];
+        $initalconfig = Config::inst()->get(HTMLEditorField::class, 'tiptap_config_initial') ?: [];
+
+        $config = Config::inst()->get(HTMLEditorField::class, 'tiptap_config');
+
+        // if you have no config, use the inital config
+        if(!$config) {
+            $config = $initalconfig;
+        }
 
         // Add tooltip translations
         $config['tooltips'] = $this->getTooltipTranslations();
@@ -240,12 +247,15 @@ class TipTapFieldExtension extends Extension
 
             'bulletList' => _t('SilverStripeTipTap.BULLET_LIST', 'Bullet List'),
             'orderedList' => _t('SilverStripeTipTap.ORDERED_LIST', 'Ordered List'),
+            'removelink' => _t('SilverStripeTipTap.REMOVE_LINK', 'Remove Link'),
 
             // the silverstripe link extensions
             'ss-link-ext' => _t('SilverStripeTipTap.SS_LINK_EXT', 'Insert External Link'),
             'ss-link-site' => _t('SilverStripeTipTap.SS_LINK_SITE', 'Insert Site Link'),
             'ss-link-file' => _t('SilverStripeTipTap.SS_LINK_FILE', 'Insert File'),
             'ss-link-media' => _t('SilverStripeTipTap.SS_LINK_MEDIA', 'Insert Media'),
+            'ss-link-anchor' => _t('SilverStripeTipTap.SS_LINK_ANCHOR', 'Insert Anchor'),
+            "ss-link-email" => _t('SilverStripeTipTap.SS_LINK_EMAIL', 'Insert Email'),
         ];
     }
 
