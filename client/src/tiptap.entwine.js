@@ -13,6 +13,7 @@ import Table from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
+import Youtube from '@tiptap/extension-youtube';
 import screenfull from 'screenfull';
 import InternalAnchor from './InternalAnchor';
 
@@ -49,6 +50,10 @@ import strikethrough from './tools/strikethrough';
 import table from './tools/table';
 import underline from './tools/underline';
 import undo from './tools/undo';
+import clear from './tools/clear';
+import youtube from './tools/youtube';
+import paste from './tools/paste';
+
 import {
   default as htmlSource,
   enterHtmlSource as enterHtmlSourceTool,
@@ -56,6 +61,7 @@ import {
   toggleHtmlSource as toggleHtmlSourceTool,
 } from './tools/htmlSource';
 
+// all available tools
 const TOOLS = [
   bold,
   italic,
@@ -90,6 +96,9 @@ const TOOLS = [
   fullscreen,
   htmlSource,
   table,
+  clear,
+  youtube,
+  paste
 ];
 
 
@@ -139,6 +148,8 @@ const TOOLS = [
   $.entwine('ss', function ($) {
     $('textarea.htmleditor').entwine({
       onmatch: function () {
+
+        // todo: make the config init better
         let config;
         try {
           // First try to get config from data-tiptap-config attribute (from PHP extension)
@@ -176,6 +187,7 @@ const TOOLS = [
                 levels: config.headingLevels || [1, 2, 3]
               }
             }),
+            Youtube,
             // Additional extensions not included in StarterKit
             Underline,
             Image,
@@ -237,7 +249,7 @@ const TOOLS = [
             }),
             TableRow,
             TableHeader,
-            TableCell
+            TableCell,
           ];
 
           // Create TipTap editor
@@ -488,9 +500,6 @@ const TOOLS = [
           const capability = registry.tools[action];
           if (typeof capability.init === 'function') {
             capability.init({ editor, config, host: this });
-          }
-          if (typeof capability.setContext === 'function') {
-            capability.setContext({ context: this.getCMSContext() });
           }
         });
       },
@@ -1081,31 +1090,6 @@ const TOOLS = [
           window.scrollTo(scrollX, scrollY);
         }
       },
-
-      /**
-       * Set CMS context for all extensions
-       * This method propagates context to all loaded extensions that support it
-       * @param {Object} context - CMS context object
-       */
-      setCMSContext: function (context) {
-
-        // Store context on the entwine instance
-        this.data('tiptap-cms-context', context);
-
-        const registry = this.getToolRegistry();
-        Object.keys(registry.tools).forEach((action) => {
-          registry.tools[action].setContext({ context });
-        });
-      },
-
-      /**
-       * Get stored CMS context
-       * @returns {Object} CMS context object
-       */
-      getCMSContext: function () {
-        const context = this.data('tiptap-cms-context');
-        return context || {};
-      }
     });
   });
 })(jQuery);

@@ -82,9 +82,8 @@ window.TipTapExtensions['ss-link-file'] = {
         this.modalContainer = modalContainer;
 
         // Load the InsertMediaModal component
-        const context = this.getCMSContext();
-        const InjectableInsertMediaModal = window.Injector.loadComponent('InsertMediaModal', context);
-
+        const InjectableInsertMediaModal = window.Injector.loadComponent('InsertMediaModal');
+       // console.log('here', context);
         if (!InjectableInsertMediaModal) {
             console.error('InsertMediaModal component not available');
             return;
@@ -190,29 +189,6 @@ window.TipTapExtensions['ss-link-file'] = {
         };
     },
 
-
-    /**
-     * Set CMS context for modal rendering
-     * This method ensures proper context propagation when multiple editors are present
-     * @param {Object} context - CMS context object (e.g., { context: 'cms-main' })
-     */
-    setCMSContext: function (context) {
-        if (!context || typeof context !== 'object') {
-            console.warn('ss-link-media: Invalid context provided to setCMSContext:', context);
-            return;
-        }
-        
-        console.log('ss-link-media: Setting CMS context:', context);
-        this.cmsContext = context;
-    },
-
-    /**
-     * Get CMS context for Injector
-     * @returns {Object} CMS context
-     */
-    getCMSContext: function () {
-        return this.cmsContext ;
-    },
 
     /**
      * Build file attributes following TinyMCE pattern

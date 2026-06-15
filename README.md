@@ -55,6 +55,12 @@ For a full configuration guide, see the [configuration document](docs/CONFIGURAT
 - **redo** - Redo button (Ctrl+Y)
 - **fullscreen** - Toggle fullscreen mode button (F11)
 - **htmlSource** - Toggle HTML source view button (Ctrl+Shift+H)
+- **removelink** - remove anhor links
+- **clear** - clear formatting
+- **paste** - paste from microsoft word/ other messy servcies
+
+Visual tweaks:
+
 - **separator** - Visual separator between button groups
 - **newline** - Force toolbar to wrap to the next line
 - **dropdown** - Create grouped dropdowns with custom titles, icons, and actions
@@ -66,7 +72,8 @@ There are also SilverStripe specific extensions. These also serves as examples i
 - **ss-link-ext** - external links, anchor tags, routes etc.
 - **ss-link-file** - links to a SilverStripe file inside assets
 - **ss-link-media** - embeds an image
-
+- **ss-link-email** - embeds an email
+- **ss-link-anchor** - embeds an anchor
 ---
 
 ### 📐 TipTap-like Toolbar (recommended)

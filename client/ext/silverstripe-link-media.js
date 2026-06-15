@@ -34,24 +34,8 @@ window.TipTapExtensions['ss-link-media'] = {
         this.editor = editor;
         this.config = config;
         this.tiptapInstance = tiptapInstance;
-        // Initialize context to null, will be set via setCMSContext
-        this.cmsContext = null;
     },
 
-    /**
-     * Set CMS context for modal rendering
-     * This method ensures proper context propagation when multiple editors are present
-     * @param {Object} context - CMS context object (e.g., { context: 'cms-main' })
-     */
-    setCMSContext: function (context) {
-        if (!context || typeof context !== 'object') {
-            console.warn('ss-link-media: Invalid context provided to setCMSContext:', context);
-            return;
-        }
-        
-        console.log('ss-link-media: Setting CMS context:', context);
-        this.cmsContext = context;
-    },
 
 
     /**
@@ -99,8 +83,7 @@ window.TipTapExtensions['ss-link-media'] = {
         this.modalContainer = modalContainer;
 
         // Load the InsertMediaModal component
-        const context = this.getCMSContext();
-        const InjectableInsertMediaModal = window.Injector.loadComponent('InsertMediaModal', context);
+        const InjectableInsertMediaModal = window.Injector.loadComponent('InsertMediaModal');
 
         if (!InjectableInsertMediaModal) {
             console.error('InsertMediaModal component not available');
@@ -454,29 +437,6 @@ window.TipTapExtensions['ss-link-media'] = {
         return !editor.can().chain().focus().setLink({ href: '#' }).run();
     },
 
-    /**
-     * Get CMS context for Injector
-     * Uses stored context first, falls back to DOM detection
-     * @returns {Object} CMS context
-     */
-    getCMSContext: function () {
-        // Use stored context if available
-        if (this.cmsContext) {
-            console.log('ss-link-media: Using stored CMS context:', this.cmsContext);
-            return this.cmsContext;
-        }
-        
-        // Fallback to DOM detection
-        const cmsContent = document.querySelector('.cms-content');
-        if (cmsContent && cmsContent.id) {
-            const context = { context: cmsContent.id };
-            console.log('ss-link-media: Using DOM-detected CMS context:', context);
-            return context;
-        }
-        
-        console.log('ss-link-media: No CMS context found, using empty context');
-        return {};
-    },
 
     /**
      * Insert an image into the editor (following TinyMCE pattern)
@@ -670,35 +630,4 @@ window.TipTapExtensions['ss-link-media'] = {
         return !editor.can().insertContent('<img src="#" />');
     },
 
-};
-
-/**
- * Utility function to set CMS context on all TipTap editors on the page
- * @param {Object} context - CMS context object (e.g., { context: 'cms-main' })
- * @param {string} [selector='.htmleditor[data-tiptap-initialized]'] - jQuery selector for editors
- */
-window.TipTapExtensions.setCMSContextForAll = function(context, selector = '.htmleditor[data-tiptap-initialized]') {
-    if (!context || typeof context !== 'object') {
-        console.warn('TipTapExtensions.setCMSContextForAll: Invalid context provided:', context);
-        return;
-    }
-    
-    if (typeof window.jQuery === 'undefined') {
-        console.warn('TipTapExtensions.setCMSContextForAll: jQuery not available');
-        return;
-    }
-    
-    const $ = window.jQuery;
-    const editors = $(selector);
-    
-    console.log(`TipTapExtensions.setCMSContextForAll: Setting context for ${editors.length} editors:`, context);
-    
-    editors.each(function() {
-        const $editor = $(this);
-        if (typeof $editor.setCMSContext === 'function') {
-            $editor.setCMSContext(context);
-        } else {
-            console.warn('TipTapExtensions.setCMSContextForAll: Editor element does not have setCMSContext method:', this);
-        }
-    });
 };
