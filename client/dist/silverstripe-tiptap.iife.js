@@ -34492,12 +34492,7 @@ and ensure you are accounting for this risk.
             this.after(wrapper);
             this.hide();
             const extensions = [
-              StarterKit.configure({
-                // Configure specific extensions within StarterKit
-                heading: {
-                  levels: config.headingLevels || [1, 2, 3]
-                }
-              }),
+              StarterKit,
               Youtube,
               // Additional extensions not included in StarterKit
               Underline,

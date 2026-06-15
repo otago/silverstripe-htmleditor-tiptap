@@ -72,14 +72,6 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorField:
         - 'ss-link-anchor': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-anchor.js'
         - 'ss-link-email': 'otago/silverstripe-tiptap: client/ext/silverstripe-link-email.js'
 
-    # Heading configuration
-    headingLevels:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
     
     # Styles configuration
     styles:

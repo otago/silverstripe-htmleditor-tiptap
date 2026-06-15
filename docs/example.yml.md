@@ -34,10 +34,7 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorField:
       - 'StarterKit'
       - 'Underline'
     
-    # Only allow H1 and H2
-    headingLevels:
-      - 1
-      - 2
+   
     
     # Custom settings
     autofocus: true
@@ -75,14 +72,6 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorField:
 #       - 'Link'
 #       - 'Image'
 #     
-#     # All heading levels
-#     headingLevels:
-#       - 1
-#       - 2
-#       - 3
-#       - 4
-#       - 5
-#       - 6
 #     
 #     # Rich editor settings
 #     autofocus: false
