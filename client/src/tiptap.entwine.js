@@ -53,13 +53,8 @@ import undo from './tools/undo';
 import clear from './tools/clear';
 import youtube from './tools/youtube';
 import paste from './tools/paste';
+import htmlSource from './tools/htmlSource';
 
-import {
-  default as htmlSource,
-  enterHtmlSource as enterHtmlSourceTool,
-  exitHtmlSource as exitHtmlSourceTool,
-  toggleHtmlSource as toggleHtmlSourceTool,
-} from './tools/htmlSource';
 
 // all available tools
 const TOOLS = [
@@ -941,18 +936,6 @@ const TOOLS = [
 
         // Add keyboard event listener to the wrapper
         wrapper.on('keydown', function (e) {
-          // Ctrl+Shift+H - Toggle HTML source
-          if (e.ctrlKey && e.shiftKey && e.key === 'H') {
-            e.preventDefault();
-            const htmlSourceButton = wrapper.find('button[data-action="htmlSource"]');
-            toggleHtmlSourceTool(editor, htmlSourceButton, {
-              $,
-              constants: CONSTANTS,
-              normalizeContent: (html) => this.normalizeContent(html),
-              autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
-              dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change),
-            });
-          }
 
           // Alignment shortcuts
           if (e.ctrlKey && !e.shiftKey && !e.altKey) {
@@ -1015,8 +998,10 @@ const TOOLS = [
         return null;
       },
 
+
+      // below is the event to trigger the redux form, for the elmental forms.
+      // this also retriggers the change for the content of the tiptap form. for example the HTML view version.
       dispatchReduxFormChange: function (html) {
-        // below is the event to trigger the redux form, for the elmental forms.
         const textareaElement = this[0];
         const textareaValueSetter = Object.getOwnPropertyDescriptor(
           window.HTMLTextAreaElement.prototype,

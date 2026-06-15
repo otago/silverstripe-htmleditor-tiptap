@@ -34317,9 +34317,7 @@ and ensure you are accounting for this risk.
       $: $2,
       constants,
       autoResizeTextarea,
-      //normalizeContent,
       dispatchReduxFormChange
-      //  syncParentContent,
     } = context;
     const proseMirrorElement = wrapper.find(`.${constants.CSS_CLASSES.PROSEMIRROR}`);
     const currentHtml = editor.getHTML();
@@ -34329,7 +34327,6 @@ and ensure you are accounting for this risk.
     proseMirrorElement.hide();
     proseMirrorElement.after(htmlTextarea);
     wrapper.addClass(constants.CSS_CLASSES.HTML_SOURCE);
-    console.log("enterHtmlSource");
     autoResizeTextarea(htmlTextarea);
     htmlTextarea.on("input", () => {
       dispatchReduxFormChange(htmlTextarea.val());
@@ -34341,7 +34338,7 @@ and ensure you are accounting for this risk.
     wrapper.data("html-source-formatted", formattedHtml);
   }
   function exitHtmlSource(editor, wrapper, context) {
-    const { constants, normalizeContent } = context;
+    const { constants, normalizeContent, dispatchReduxFormChange } = context;
     const proseMirrorElement = wrapper.find(`.${constants.CSS_CLASSES.PROSEMIRROR}`);
     const htmlTextarea = wrapper.data("html-textarea");
     const originalHtml = wrapper.data("html-source-original");
@@ -34360,6 +34357,7 @@ and ensure you are accounting for this risk.
     proseMirrorElement.show();
     wrapper.removeClass(constants.CSS_CLASSES.HTML_SOURCE);
     editor.commands.focus();
+    dispatchReduxFormChange(editor.getHTML());
   }
   function toggleHtmlSource(editor, button, context) {
     const { constants } = context;
@@ -35066,19 +35064,7 @@ and ensure you are accounting for this risk.
         },
         // Add keyboard shortcuts
         addKeyboardShortcuts: function(wrapper, editor) {
-          const self = this;
           wrapper.on("keydown", function(e) {
-            if (e.ctrlKey && e.shiftKey && e.key === "H") {
-              e.preventDefault();
-              const htmlSourceButton = wrapper.find('button[data-action="htmlSource"]');
-              toggleHtmlSource(editor, htmlSourceButton, {
-                $: $3,
-                constants: CONSTANTS,
-                normalizeContent: (html) => this.normalizeContent(html),
-                autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
-                dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change)
-              });
-            }
             if (e.ctrlKey && !e.shiftKey && !e.altKey) {
               switch (e.key) {
                 case "L":
@@ -35132,6 +35118,8 @@ and ensure you are accounting for this risk.
           }
           return null;
         },
+        // below is the event to trigger the redux form, for the elmental forms.
+        // this also retriggers the change for the content of the tiptap form. for example the HTML view version.
         dispatchReduxFormChange: function(html) {
           var _a;
           const textareaElement = this[0];

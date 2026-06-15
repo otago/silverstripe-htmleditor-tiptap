@@ -151,9 +151,7 @@ export function enterHtmlSource(editor, wrapper, context) {
     $,
     constants,
     autoResizeTextarea,
-    //normalizeContent,
     dispatchReduxFormChange,
-  //  syncParentContent,
   } = context;
   const proseMirrorElement = wrapper.find(`.${constants.CSS_CLASSES.PROSEMIRROR}`);
   const currentHtml = editor.getHTML();
@@ -167,7 +165,6 @@ export function enterHtmlSource(editor, wrapper, context) {
 
   wrapper.addClass(constants.CSS_CLASSES.HTML_SOURCE);
 
-  console.log('enterHtmlSource');
   autoResizeTextarea(htmlTextarea);
   htmlTextarea.on('input', () => {
     dispatchReduxFormChange(htmlTextarea.val());
@@ -182,7 +179,7 @@ export function enterHtmlSource(editor, wrapper, context) {
 }
 
 export function exitHtmlSource(editor, wrapper, context) {
-  const { constants, normalizeContent } = context;
+  const { constants, normalizeContent, dispatchReduxFormChange } = context;
   const proseMirrorElement = wrapper.find(`.${constants.CSS_CLASSES.PROSEMIRROR}`);
   const htmlTextarea = wrapper.data('html-textarea');
   const originalHtml = wrapper.data('html-source-original');
@@ -208,8 +205,11 @@ export function exitHtmlSource(editor, wrapper, context) {
   wrapper.removeClass(constants.CSS_CLASSES.HTML_SOURCE);
 
   editor.commands.focus();
+  dispatchReduxFormChange(editor.getHTML());
 }
 
+
+// this used to be Ctrl+Shift+H, but i removed it. see addKeyboardShortcuts in the extension for details.
 export function toggleHtmlSource(editor, button, context) {
   const { constants } = context;
   const wrapper = button.closest(`.${constants.CSS_CLASSES.WRAPPER}`);
