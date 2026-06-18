@@ -1,6 +1,7 @@
 <?php
 
 namespace OP;
+
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -14,46 +15,30 @@ use SilverStripe\Security\Security;
  */
 class PageTreeController extends Controller
 {
-    /**
-     * URL handlers
-     */
-    private static $url_handlers = [
-        'json' => 'getPageTreeJson',
-        'debug' => 'debugSql',
-        '' => 'index'
-    ];
 
     /**
      * Allowed actions
      */
     private static $allowed_actions = [
-        'index',
-        'getPageTreeJson',
-        'debugSql'
+        'json'
     ];
-
-    /**
-     * Default action - return basic info
-     */
-    public function index(HTTPRequest $request)
-    {
-        $response = HTTPResponse::create();
-        $response->addHeader('Content-Type', 'application/json');
-        $response->setBody(json_encode([
-            'message' => 'PageTreeController is working',
-            'timestamp' => date('Y-m-d H:i:s')
-        ]));
-        return $response;
-    }
 
     /**
      * Get page tree as JSON
      */
-    public function getPageTreeJson(HTTPRequest $request)
+    public function json(HTTPRequest $request)
     {
-        // Log the request for debugging
-        error_log("PageTreeController::getPageTreeJson called");
-        
+        if (!Security::getCurrentUser() || !Permission::check('CMS_ACCESS_CMSMain')) {
+            $response = HTTPResponse::create();
+            $response->setStatusCode(403);
+            $response->setBody(json_encode([
+                'success' => false,
+                'error' => 'Forbidden',
+                'message' => 'You do not have permission to access this resource.'
+            ]));
+            return $response;
+        }
+
         // Set JSON response header
         $response = HTTPResponse::create();
         $response->addHeader('Content-Type', 'application/json');
@@ -74,7 +59,6 @@ class PageTreeController extends Controller
                 'data' => $pageTree,
                 'count' => count($pageTree)
             ]));
-
         } catch (\Exception $e) {
             error_log("Error in getPageTreeJson: " . $e->getMessage());
             $response->setStatusCode(500);
@@ -88,37 +72,6 @@ class PageTreeController extends Controller
         return $response;
     }
 
-    /**
-     * Debug method to check SQL performance
-     */
-    public function debugSql(HTTPRequest $request)
-    {
-        $response = HTTPResponse::create();
-        $response->addHeader('Content-Type', 'application/json');
-        
-        $start = microtime(true);
-        
-        try {
-            $pages = $this->getPagesSql();
-            $end = microtime(true);
-            
-            $response->setBody(json_encode([
-                'success' => true,
-                'execution_time' => round(($end - $start) * 1000, 2) . 'ms',
-                'page_count' => count($pages),
-                'memory_usage' => memory_get_usage(true) / 1024 / 1024 . 'MB',
-                'sample_pages' => array_slice($pages, 0, 5, true) // First 5 pages for debugging
-            ]));
-        } catch (Exception $e) {
-            $response->setStatusCode(500);
-            $response->setBody(json_encode([
-                'success' => false,
-                'error' => $e->getMessage()
-            ]));
-        }
-        
-        return $response;
-    }
 
     /**
      * Get pages using SQLSelect with JOIN for better performance
@@ -140,10 +93,10 @@ class PageTreeController extends Controller
                 ->setFrom('SiteTree draft')
                 ->addLeftJoin('SiteTree_Live', 'live.ID = draft.ID', 'live')
                 ->setOrderBy('COALESCE(live.Sort, draft.Sort)', 'ASC');
-            
+
             $result = $query->execute();
             $pages = [];
-            
+
             // Build array with ID as index for efficient tree building
             foreach ($result as $row) {
                 $pages[$row['ID']] = [
@@ -156,9 +109,8 @@ class PageTreeController extends Controller
                     'children' => []
                 ];
             }
-            
+
             return $pages;
-            
         } catch (Exception $e) {
             error_log("Error in getPagesSql: " . $e->getMessage());
             throw $e;
@@ -171,7 +123,7 @@ class PageTreeController extends Controller
     private function buildPageTree($pages)
     {
         $tree = [];
-        
+
         // Build hierarchy using the indexed array
         foreach ($pages as $id => $pageData) {
             if ($pageData['parentId'] == 0) {
