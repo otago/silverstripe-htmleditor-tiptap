@@ -161,7 +161,7 @@ function generateStyleOptions(stylesConfig) {
             type: 'style',
             text: child.title || child.text || 'Style',
             className: child.className || child.class || '',
-            previewClass: child.previewClass || child.className || child.class || '',
+            previewClass: child.previewClass || '',
             isStyle: true
           };
           groupItem.children.push(styleItem);
@@ -175,7 +175,7 @@ function generateStyleOptions(stylesConfig) {
         type: 'style',
         text: item.title || item.text || 'Style',
         className: item.className || item.class || '',
-        previewClass: item.previewClass || item.className || item.class || '',
+        previewClass: item.previewClass || '',
         isStyle: true
       };
       options.push(styleItem);
@@ -241,6 +241,7 @@ const stylesTool = {
       title: tooltips.styles || 'Styles',
       action: 'styles',
       extension: 'textStyle',
+      options: []
     };
   },
   setConfigOptions( styleOptions) {

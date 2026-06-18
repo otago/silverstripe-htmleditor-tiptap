@@ -23514,7 +23514,7 @@ img.ProseMirror-separator {
               type: "style",
               text: child.title || child.text || "Style",
               className: child.className || child.class || "",
-              previewClass: child.previewClass || child.className || child.class || "",
+              previewClass: child.previewClass || "",
               isStyle: true
             };
             groupItem.children.push(styleItem);
@@ -23526,7 +23526,7 @@ img.ProseMirror-separator {
           type: "style",
           text: item.title || item.text || "Style",
           className: item.className || item.class || "",
-          previewClass: item.previewClass || item.className || item.class || "",
+          previewClass: item.previewClass || "",
           isStyle: true
         };
         options.push(styleItem);
@@ -23584,7 +23584,8 @@ img.ProseMirror-separator {
         type: "dropdown",
         title: tooltips.styles || "Styles",
         action: "styles",
-        extension: "textStyle"
+        extension: "textStyle",
+        options: []
       };
     },
     setConfigOptions(styleOptions) {
