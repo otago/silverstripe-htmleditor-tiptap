@@ -23013,17 +23013,73 @@ img.ProseMirror-separator {
     runArgs: [],
     isActive: (editor) => editor.isActive("bold")
   });
-  const bulletList = createCommandTool({
+  const hasAncestorListType$1 = (editor, typeName) => {
+    const { $from } = editor.state.selection;
+    for (let depth = $from.depth; depth > 0; depth -= 1) {
+      if ($from.node(depth).type.name === typeName) {
+        return true;
+      }
+    }
+    return false;
+  };
+  const convertNearestAncestorListType$1 = (editor, fromTypeName, toTypeName) => {
+    const { state, view } = editor;
+    const { $from } = state.selection;
+    const fromType = state.schema.nodes[fromTypeName];
+    const toType = state.schema.nodes[toTypeName];
+    if (!fromType || !toType) {
+      return false;
+    }
+    for (let depth = $from.depth; depth > 0; depth -= 1) {
+      const node2 = $from.node(depth);
+      if (node2.type !== fromType) {
+        continue;
+      }
+      const pos = $from.before(depth);
+      const tr2 = state.tr.setNodeMarkup(pos, toType, node2.attrs, node2.marks);
+      view.dispatch(tr2);
+      editor.commands.focus();
+      return true;
+    }
+    return false;
+  };
+  const canToggleBulletList = (editor) => {
+    return editor.can().toggleBulletList() || hasAncestorListType$1(editor, "orderedList");
+  };
+  const bulletList = {
     action: "bulletList",
-    extension: "bulletList",
-    tooltipKey: "list_bullet",
-    defaultTitle: "Bullet List",
-    canMethod: "toggleBulletList",
-    runMethod: "toggleBulletList",
-    canArgs: [],
-    runArgs: [],
-    isActive: (editor) => editor.isActive("bulletList")
-  });
+    getToolbarConfig({ tooltips }) {
+      return {
+        type: "button",
+        title: tooltips.list_bullet || "Bullet List",
+        action: "bulletList",
+        extension: "bulletList"
+      };
+    },
+    run({ editor }) {
+      if (convertNearestAncestorListType$1(editor, "orderedList", "bulletList")) {
+        return;
+      }
+      if (editor.can().toggleBulletList()) {
+        editor.chain().focus().toggleBulletList().run();
+      }
+    },
+    isActive(editor) {
+      const { $from } = editor.state.selection;
+      for (let depth = $from.depth; depth > 0; depth -= 1) {
+        if ($from.node(depth).type.name === "orderedList") {
+          return false;
+        }
+        if ($from.node(depth).type.name === "bulletList") {
+          return true;
+        }
+      }
+      return false;
+    },
+    isDisabled(editor) {
+      return !canToggleBulletList(editor);
+    }
+  };
   const code = createCommandTool({
     action: "code",
     extension: "code",
@@ -23221,17 +23277,73 @@ img.ProseMirror-separator {
       return !editor.can().setLink({ href: "#" });
     }
   };
-  const orderedList = createCommandTool({
+  const hasAncestorListType = (editor, typeName) => {
+    const { $from } = editor.state.selection;
+    for (let depth = $from.depth; depth > 0; depth -= 1) {
+      if ($from.node(depth).type.name === typeName) {
+        return true;
+      }
+    }
+    return false;
+  };
+  const convertNearestAncestorListType = (editor, fromTypeName, toTypeName) => {
+    const { state, view } = editor;
+    const { $from } = state.selection;
+    const fromType = state.schema.nodes[fromTypeName];
+    const toType = state.schema.nodes[toTypeName];
+    if (!fromType || !toType) {
+      return false;
+    }
+    for (let depth = $from.depth; depth > 0; depth -= 1) {
+      const node2 = $from.node(depth);
+      if (node2.type !== fromType) {
+        continue;
+      }
+      const pos = $from.before(depth);
+      const tr2 = state.tr.setNodeMarkup(pos, toType, node2.attrs, node2.marks);
+      view.dispatch(tr2);
+      editor.commands.focus();
+      return true;
+    }
+    return false;
+  };
+  const canToggleOrderedList = (editor) => {
+    return editor.can().toggleOrderedList() || hasAncestorListType(editor, "bulletList");
+  };
+  const orderedList = {
     action: "orderedList",
-    extension: "orderedList",
-    tooltipKey: "list_ordered",
-    defaultTitle: "Numbered List",
-    canMethod: "toggleOrderedList",
-    runMethod: "toggleOrderedList",
-    canArgs: [],
-    runArgs: [],
-    isActive: (editor) => editor.isActive("orderedList")
-  });
+    getToolbarConfig({ tooltips }) {
+      return {
+        type: "button",
+        title: tooltips.list_ordered || "Numbered List",
+        action: "orderedList",
+        extension: "orderedList"
+      };
+    },
+    run({ editor }) {
+      if (convertNearestAncestorListType(editor, "bulletList", "orderedList")) {
+        return;
+      }
+      if (editor.can().toggleOrderedList()) {
+        editor.chain().focus().toggleOrderedList().run();
+      }
+    },
+    isActive(editor) {
+      const { $from } = editor.state.selection;
+      for (let depth = $from.depth; depth > 0; depth -= 1) {
+        if ($from.node(depth).type.name === "bulletList") {
+          return false;
+        }
+        if ($from.node(depth).type.name === "orderedList") {
+          return true;
+        }
+      }
+      return false;
+    },
+    isDisabled(editor) {
+      return !canToggleOrderedList(editor);
+    }
+  };
   const paragraph = createCommandTool({
     action: "paragraph",
     extension: "heading",
@@ -34599,6 +34711,13 @@ and ensure you are accounting for this risk.
                   guard.proseMirrorElement.removeEventListener("keyup", guard.handleElementalToggleKeys);
                   wrapper.removeData("tiptap-elemental-guard");
                 }
+                const outsideHandlers = wrapper.data("tiptap-outside-handlers");
+                if (outsideHandlers) {
+                  document.removeEventListener("pointerdown", outsideHandlers.handleOutsideInteraction, true);
+                  document.removeEventListener("focusin", outsideHandlers.handleOutsideInteraction, true);
+                  document.removeEventListener("keydown", outsideHandlers.handleEscapeKey, true);
+                  wrapper.removeData("tiptap-outside-handlers");
+                }
               }
             });
             this.addKeyboardShortcuts(wrapper, editor);
@@ -34707,7 +34826,7 @@ and ensure you are accounting for this risk.
               const button = this.createToolbarButton(itemConfig, editor);
               toolbar.append(button);
             } else if (itemConfig.type === "dropdown") {
-              const dropdown = this.createToolbarDropdown(itemConfig, editor);
+              const dropdown = this.createToolbarDropdown(itemConfig, editor, registry.tools[item]);
               toolbar.append(dropdown);
             }
           });
@@ -34718,6 +34837,36 @@ and ensure you are accounting for this risk.
           editor.on("selectionUpdate", () => {
             this.updateToolbarStates(toolbar, editor);
           });
+          if (!wrapper.data("tiptap-outside-handlers")) {
+            const handleOutsideInteraction = (event) => {
+              if ($3(event.target).closest(`.${CONSTANTS.CSS_CLASSES.DROPDOWN}`).length > 0) {
+                return;
+              }
+              this.closeToolbarOverlays(toolbar);
+            };
+            const handleEscapeKey = (event) => {
+              if (event.key === "Escape") {
+                this.closeToolbarOverlays(toolbar);
+              }
+            };
+            document.addEventListener("pointerdown", handleOutsideInteraction, true);
+            document.addEventListener("focusin", handleOutsideInteraction, true);
+            document.addEventListener("keydown", handleEscapeKey, true);
+            wrapper.data("tiptap-outside-handlers", {
+              handleOutsideInteraction,
+              handleEscapeKey
+            });
+          }
+        },
+        closeToolbarOverlays: function(container2) {
+          container2.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+          container2.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
+            const submenu = $3(this).data("submenu");
+            if (submenu) {
+              submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+            }
+          });
+          container2.find(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
         },
         // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
         normalizeContent: function(content) {
@@ -34744,22 +34893,13 @@ and ensure you are accounting for this risk.
         // Add dropdown toggle functionality
         addDropdownToggle: function(button, dropdownMenu) {
           button.on("click", (e) => {
+            console.log("open??? 3");
             e.preventDefault();
             e.stopPropagation();
             $3(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
             const toolbar = button.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
             toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
             dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
-          });
-          $3(document).on("click", () => {
-            dropdownMenu.removeClass("show");
-            dropdownMenu.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
-              const submenu = $3(this).data("submenu");
-              if (submenu) {
-                submenu.removeClass("show");
-              }
-            });
-            $3(".tiptap-tooltip.show").removeClass("show");
           });
         },
         // Create generic dropdown for grouped objects
@@ -34824,18 +34964,17 @@ and ensure you are accounting for this risk.
           });
           return button;
         },
-        // Create a toolbar dropdown
-        createToolbarDropdown: function(itemConfig, editor) {
+        // Create a toolbar dropdown - used for table and style
+        createToolbarDropdown: function(itemConfig, editor, tool) {
           const dropdown = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
           const button = $3(`<button type="button" data-action="${itemConfig.action}"></button>`);
           const dropdownMenu = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
-          const self = this;
           const capability = this.getTool(itemConfig.action);
           if (itemConfig.type === "dropdown") {
             dropdownMenu.addClass(CONSTANTS.CSS_CLASSES.TABLE_DROPDOWN);
           }
           this.addTooltip(button, itemConfig.title);
-          const wasCustomRendered = capability && capability.renderDropdownOptions({
+          capability && capability.renderDropdownOptions({
             itemConfig,
             dropdown,
             dropdownMenu,
@@ -34850,80 +34989,20 @@ and ensure you are accounting for this risk.
               updateToolbarStates: (toolbar, editorInstance) => this.updateToolbarStates(toolbar, editorInstance)
             }
           });
-          if (!wasCustomRendered && itemConfig.options) {
-            itemConfig.options.forEach((option) => {
-              let optionBtn;
-              const optionAction = option.action || "";
-              const parts = this.parseTooltipText(option.text);
-              optionBtn = $3(`<button type="button" data-option-action="${optionAction}" data-parent-action="${itemConfig.action}">${parts.title}</button>`);
-              this.addTooltip(optionBtn, option.text);
-              optionBtn.on("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (optionBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
-                  return;
-                }
-                const parentCapability = this.getTool(itemConfig.action);
-                if (parentCapability && typeof parentCapability.runOption === "function") {
-                  parentCapability.runOption({
-                    optionAction,
-                    option,
-                    editor,
-                    host: this,
-                    context: {
-                      constants: CONSTANTS
-                    }
-                  });
-                } else if (optionAction) {
-                  const optionCapability = this.getTool(optionAction);
-                  if (optionCapability) {
-                    optionCapability.run({
-                      editor,
-                      itemConfig: {
-                        action: optionAction,
-                        extension: optionAction,
-                        title: option.text,
-                        type: "button",
-                        buttontext: ""
-                      },
-                      host: this,
-                      context: {
-                        $: $3,
-                        constants: CONSTANTS,
-                        normalizeContent: (html) => this.normalizeContent(html),
-                        autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
-                        dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change)
-                      }
-                    });
-                  }
-                }
-                dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-                setTimeout(() => {
-                  self.updateToolbarStates(dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
-                }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
-              });
-              if (optionBtn) {
-                dropdownMenu.append(optionBtn);
-              }
-            });
-          }
           button.on("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             $3(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
             const toolbar = dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
             toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-            dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
-          });
-          $3(document).on("click", () => {
-            dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-            dropdownMenu.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
-              const submenu = $3(this).data("submenu");
-              if (submenu) {
-                submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-              }
+            itemConfig.options.forEach((option) => {
+              let optionBtn = dropdownMenu.find(`button[data-option-action="${option.action}"]`);
+              optionBtn.toggleClass(
+                CONSTANTS.CSS_CLASSES.DISABLED,
+                tool.isOptionDisabled({ optionAction: option.action, editor })
+              );
             });
-            $3(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+            dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
           });
           dropdown.append(button, dropdownMenu);
           return dropdown;

@@ -301,6 +301,14 @@ const TOOLS = [
                 guard.proseMirrorElement.removeEventListener('keyup', guard.handleElementalToggleKeys);
                 wrapper.removeData('tiptap-elemental-guard');
               }
+
+              const outsideHandlers = wrapper.data('tiptap-outside-handlers');
+              if (outsideHandlers) {
+                document.removeEventListener('pointerdown', outsideHandlers.handleOutsideInteraction, true);
+                document.removeEventListener('focusin', outsideHandlers.handleOutsideInteraction, true);
+                document.removeEventListener('keydown', outsideHandlers.handleEscapeKey, true);
+                wrapper.removeData('tiptap-outside-handlers');
+              }
             }
           });
 
@@ -451,7 +459,7 @@ const TOOLS = [
           } else if (itemConfig.type === 'dropdown') {
             //  Create dropdown
             //  For extension dropdowns, pass the toolbarConfig and itemName for context
-            const dropdown = this.createToolbarDropdown(itemConfig, editor);
+            const dropdown = this.createToolbarDropdown(itemConfig, editor, registry.tools[item]);
             toolbar.append(dropdown);
           }
         });
@@ -466,6 +474,42 @@ const TOOLS = [
         editor.on('selectionUpdate', () => {
           this.updateToolbarStates(toolbar, editor);
         });
+
+        // Close dropdowns/tooltips on outside interactions, even if bubbling is stopped elsewhere.
+        if (!wrapper.data('tiptap-outside-handlers')) {
+          const handleOutsideInteraction = (event) => {
+            if ($(event.target).closest(`.${CONSTANTS.CSS_CLASSES.DROPDOWN}`).length > 0) {
+              return;
+            }
+            this.closeToolbarOverlays(toolbar);
+          };
+
+          const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+              this.closeToolbarOverlays(toolbar);
+            }
+          };
+
+          document.addEventListener('pointerdown', handleOutsideInteraction, true);
+          document.addEventListener('focusin', handleOutsideInteraction, true);
+          document.addEventListener('keydown', handleEscapeKey, true);
+
+          wrapper.data('tiptap-outside-handlers', {
+            handleOutsideInteraction,
+            handleEscapeKey,
+          });
+        }
+      },
+
+      closeToolbarOverlays: function (container) {
+        container.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+        container.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function () {
+          const submenu = $(this).data('submenu');
+          if (submenu) {
+            submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+          }
+        });
+        container.find(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
       },
 
       // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
@@ -498,6 +542,8 @@ const TOOLS = [
       // Add dropdown toggle functionality
       addDropdownToggle: function (button, dropdownMenu) {
         button.on('click', (e) => {
+          
+              console.log('open??? 3');
           e.preventDefault();
           e.stopPropagation();
 
@@ -510,20 +556,6 @@ const TOOLS = [
 
           // Toggle this dropdown
           dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
-        });
-
-        // Close dropdown when clicking outside
-        $(document).on('click', () => {
-          dropdownMenu.removeClass('show');
-          // Clean up any open submenus
-          dropdownMenu.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function () {
-            const submenu = $(this).data('submenu');
-            if (submenu) {
-              submenu.removeClass('show');
-            }
-          });
-          // Hide any visible tooltips when clicking outside
-          $('.tiptap-tooltip.show').removeClass('show');
         });
       },
 
@@ -611,8 +643,8 @@ const TOOLS = [
         return button;
       },
 
-      // Create a toolbar dropdown
-      createToolbarDropdown: function (itemConfig, editor) {
+      // Create a toolbar dropdown - used for table and style
+      createToolbarDropdown: function (itemConfig, editor, tool) {
         const dropdown = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
         const button = $(`<button type="button" data-action="${itemConfig.action}"></button>`);
         const dropdownMenu = $(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
@@ -644,75 +676,7 @@ const TOOLS = [
           },
         });
 
-        if (!wasCustomRendered && itemConfig.options) {
-          itemConfig.options.forEach(option => {
-            let optionBtn;
-
-            const optionAction = option.action || '';
-            const parts = this.parseTooltipText(option.text);
-            optionBtn = $(`<button type="button" data-option-action="${optionAction}" data-parent-action="${itemConfig.action}">${parts.title}</button>`);
-
-            // Add tooltip if there's a shortcut or always for consistency
-            this.addTooltip(optionBtn, option.text);
-
-            optionBtn.on('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-
-              // Check if button is disabled
-              if (optionBtn.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
-                return;
-              }
-
-              const parentCapability = this.getTool(itemConfig.action);
-              if (parentCapability && typeof parentCapability.runOption === 'function') {
-                parentCapability.runOption({
-                  optionAction,
-                  option,
-                  editor,
-                  host: this,
-                  context: {
-                    constants: CONSTANTS,
-                  },
-                });
-              } else if (optionAction) {
-                const optionCapability = this.getTool(optionAction);
-                if (optionCapability) {
-                  optionCapability.run({
-                    editor,
-                    itemConfig: {
-                      action: optionAction,
-                      extension: optionAction,
-                      title: option.text,
-                      type: 'button',
-                      buttontext: '',
-                    },
-                    host: this,
-                    context: {
-                      $,
-                      constants: CONSTANTS,
-                      normalizeContent: (html) => this.normalizeContent(html),
-                      autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
-                      dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change),
-                    },
-                  });
-                }
-              }
-
-              dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-
-              // Refresh toolbar states after action
-              setTimeout(() => {
-                self.updateToolbarStates(dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
-              }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
-            });
-
-            if (optionBtn) {
-              dropdownMenu.append(optionBtn);
-            }
-          });
-        }
-
+        // Outside close for dropdown menus handled once at editor level (capture phase) in createToolbarEventListeners.
         button.on('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -723,23 +687,19 @@ const TOOLS = [
           const toolbar = dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
           toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
 
+          // can you use this sub tool?
+          itemConfig.options.forEach(option => {
+            let optionBtn = dropdownMenu.find(`button[data-option-action="${option.action}"]`);
+            optionBtn.toggleClass(
+              CONSTANTS.CSS_CLASSES.DISABLED,
+              tool.isOptionDisabled({ optionAction: option.action, editor })
+            );
+          });
+
           // Toggle this dropdown
           dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
         });
 
-        // Close dropdown when clicking outside
-        $(document).on('click', () => {
-          dropdownMenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-          // Clean up any open submenus
-          dropdownMenu.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function () {
-            const submenu = $(this).data('submenu');
-            if (submenu) {
-              submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-            }
-          });
-          // Hide any visible tooltips when clicking outside
-          $(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-        });
 
         dropdown.append(button, dropdownMenu);
         return dropdown;
