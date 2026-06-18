@@ -1,7 +1,10 @@
 class HtmlSourceModeHelper {
-  attachKeyGuard(wrapper, htmlTextarea) {
+  attachKeyGuard(wrapper, htmlTextarea, dispatchReduxFormChange) {
     const htmlSourceElement = htmlTextarea[0];
     const handleHtmlSourceKeyEvent = (event) => {
+      // we're way more proactive pumping changes back to the main editor. authors were
+      // trying to save directly while in HTML view
+      dispatchReduxFormChange(htmlTextarea.val());
       event.stopPropagation();
       if (typeof event.stopImmediatePropagation === 'function') {
         event.stopImmediatePropagation();
@@ -166,10 +169,11 @@ export function enterHtmlSource(editor, wrapper, context) {
   wrapper.addClass(constants.CSS_CLASSES.HTML_SOURCE);
 
   autoResizeTextarea(htmlTextarea);
-  htmlTextarea.on('input', () => {
-    dispatchReduxFormChange(htmlTextarea.val());
-  });
-  helper.attachKeyGuard(wrapper, htmlTextarea);
+  // htmlTextarea.on('input', () => {
+  //   console.log('on input', htmlTextarea.val());
+  //   dispatchReduxFormChange(htmlTextarea.val());
+  // });
+  helper.attachKeyGuard(wrapper, htmlTextarea, dispatchReduxFormChange);
 
   htmlTextarea.focus();
 

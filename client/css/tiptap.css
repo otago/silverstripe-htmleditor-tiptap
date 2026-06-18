@@ -490,6 +490,58 @@ for the lists dropdown
   color: #999;
 }
 
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-picker {
+  width: 100%;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-toggle {
+  width: 100%;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-panel {
+  display: none;
+  padding: 8px 10px 10px;
+  border-top: 1px solid #e1e8ed;
+  margin-top: 4px;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-panel.show {
+  display: block;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-preview {
+  font-size: 12px;
+  color: #5f6368;
+  margin-bottom: 8px;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 16px);
+  grid-template-rows: repeat(10, 16px);
+  gap: 2px;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-cell {
+  min-width: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid #c1c9d2;
+  border-radius: 2px;
+  background: #ffffff;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-cell::before {
+  content: none;
+}
+
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-cell:hover,
+.tiptap-toolbar .dropdown-menu .tiptap-table-size-cell.is-selected {
+  background: #e3f2fd;
+  border-color: #1976d2;
+}
+
 /* Dropdown items (non-button elements) */
 .tiptap-toolbar .dropdown-menu .dropdown-item {
   display: block;

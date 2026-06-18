@@ -23687,20 +23687,24 @@ img.ProseMirror-separator {
     toggleHeaderCell: "Toggle Header Cell"
   };
   const TABLE_OPTION_ORDER = Object.keys(TABLE_OPTION_KEYS);
+  const TABLE_SIZE_GRID_MAX_ROWS = 10;
+  const TABLE_SIZE_GRID_MAX_COLS = 10;
   const runSimpleAction = (editor, method) => {
     if (!editor.can()[method]()) {
       return;
     }
     editor.chain().focus()[method]().run();
   };
-  function executeTableAction(action, editor, constants) {
+  function executeTableAction(action, editor, constants, tableSize = null) {
     if (action === "insertTable") {
       if (!editor.can().insertTable()) {
         return;
       }
+      const rows = Math.max(1, Math.min(TABLE_SIZE_GRID_MAX_ROWS, (tableSize == null ? void 0 : tableSize.rows) || constants.TABLE_DEFAULT_ROWS));
+      const cols = Math.max(1, Math.min(TABLE_SIZE_GRID_MAX_COLS, (tableSize == null ? void 0 : tableSize.cols) || constants.TABLE_DEFAULT_COLS));
       editor.chain().focus().insertTable({
-        rows: constants.TABLE_DEFAULT_ROWS,
-        cols: constants.TABLE_DEFAULT_COLS,
+        rows,
+        cols,
         withHeaderRow: true
       }).run();
       return;
@@ -23753,6 +23757,78 @@ img.ProseMirror-separator {
     });
     return optionBtn;
   };
+  const updateGridPreview = (gridCells, selectedRows, selectedCols) => {
+    gridCells.each(function() {
+      const cellElement = this;
+      const cellRows = Number(cellElement.getAttribute("data-table-rows"));
+      const cellCols = Number(cellElement.getAttribute("data-table-cols"));
+      const isSelected = cellRows <= selectedRows && cellCols <= selectedCols;
+      cellElement.classList.toggle("is-selected", isSelected);
+    });
+  };
+  const createInsertTableSizePicker = ({ option, editor, dropdown, dropdownMenu, context }) => {
+    const {
+      $: $2,
+      constants,
+      parseTooltipText,
+      addTooltip,
+      updateToolbarStates
+    } = context;
+    const optionAction = option.action || "";
+    const parts = parseTooltipText(option.text);
+    const container2 = $2('<div class="tiptap-table-size-picker"></div>');
+    const insertButton = $2(`<button type="button" class="tiptap-table-size-toggle" data-option-action="${optionAction}" data-parent-action="table">${parts.title}</button>`);
+    const panel = $2('<div class="tiptap-table-size-panel"></div>');
+    const preview = $2('<div class="tiptap-table-size-preview">1 x 1</div>');
+    const grid = $2('<div class="tiptap-table-size-grid" role="grid"></div>');
+    let currentRows = 1;
+    let currentCols = 1;
+    addTooltip(insertButton, option.text);
+    insertButton.on("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (insertButton.hasClass(constants.CSS_CLASSES.DISABLED)) {
+        return;
+      }
+      panel.toggleClass(constants.CSS_CLASSES.SHOW);
+    });
+    for (let row = 1; row <= TABLE_SIZE_GRID_MAX_ROWS; row += 1) {
+      for (let col = 1; col <= TABLE_SIZE_GRID_MAX_COLS; col += 1) {
+        const cell = $2(`<button type="button" class="tiptap-table-size-cell" data-table-rows="${row}" data-table-cols="${col}" aria-label="${row} x ${col}"></button>`);
+        cell.on("mouseenter", (event) => {
+          const target = $2(event.currentTarget);
+          currentRows = Number(target.attr("data-table-rows"));
+          currentCols = Number(target.attr("data-table-cols"));
+          preview.text(`${currentRows} x ${currentCols}`);
+          updateGridPreview(grid.find(".tiptap-table-size-cell"), currentRows, currentCols);
+        });
+        cell.on("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (insertButton.hasClass(constants.CSS_CLASSES.DISABLED)) {
+            return;
+          }
+          const target = $2(event.currentTarget);
+          const rows = Number(target.attr("data-table-rows"));
+          const cols = Number(target.attr("data-table-cols"));
+          executeTableAction(optionAction, editor, constants, { rows, cols });
+          panel.removeClass(constants.CSS_CLASSES.SHOW);
+          dropdownMenu.removeClass(constants.CSS_CLASSES.SHOW);
+          setTimeout(() => {
+            updateToolbarStates(dropdown.closest(`.${constants.CSS_CLASSES.TOOLBAR}`), editor);
+          }, constants.TOOLBAR_UPDATE_DELAY);
+        });
+        grid.append(cell);
+      }
+    }
+    grid.on("mouseleave", () => {
+      updateGridPreview(grid.find(".tiptap-table-size-cell"), currentRows, currentCols);
+      preview.text(`${currentRows} x ${currentCols}`);
+    });
+    panel.append(preview, grid);
+    container2.append(insertButton, panel);
+    return container2;
+  };
   const tableTool = {
     action: "table",
     getToolbarConfig({ tooltips }) {
@@ -23778,6 +23854,16 @@ img.ProseMirror-separator {
         return false;
       }
       itemConfig.options.forEach((option) => {
+        if (option.action === "insertTable") {
+          dropdownMenu.append(createInsertTableSizePicker({
+            option,
+            editor,
+            dropdown,
+            dropdownMenu,
+            context
+          }));
+          return;
+        }
         dropdownMenu.append(createTableOptionButton({
           option,
           editor,
@@ -34255,9 +34341,10 @@ and ensure you are accounting for this risk.
     }
   };
   class HtmlSourceModeHelper {
-    attachKeyGuard(wrapper, htmlTextarea) {
+    attachKeyGuard(wrapper, htmlTextarea, dispatchReduxFormChange) {
       const htmlSourceElement = htmlTextarea[0];
       const handleHtmlSourceKeyEvent = (event) => {
+        dispatchReduxFormChange(htmlTextarea.val());
         event.stopPropagation();
         if (typeof event.stopImmediatePropagation === "function") {
           event.stopImmediatePropagation();
@@ -34441,10 +34528,7 @@ and ensure you are accounting for this risk.
     proseMirrorElement.after(htmlTextarea);
     wrapper.addClass(constants.CSS_CLASSES.HTML_SOURCE);
     autoResizeTextarea(htmlTextarea);
-    htmlTextarea.on("input", () => {
-      dispatchReduxFormChange(htmlTextarea.val());
-    });
-    helper.attachKeyGuard(wrapper, htmlTextarea);
+    helper.attachKeyGuard(wrapper, htmlTextarea, dispatchReduxFormChange);
     htmlTextarea.focus();
     wrapper.data("html-textarea", htmlTextarea);
     wrapper.data("html-source-original", currentHtml);
