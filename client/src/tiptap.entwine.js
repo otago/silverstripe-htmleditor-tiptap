@@ -5,6 +5,7 @@ import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
 import Highlight from '@tiptap/extension-highlight';
 import Link from '@tiptap/extension-link';
+import BubbleMenu from '@tiptap/extension-bubble-menu';
 import TextAlign from '@tiptap/extension-text-align';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
@@ -14,8 +15,16 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import Youtube from '@tiptap/extension-youtube';
+import ImageResize from 'tiptap-extension-resize-image';
 import screenfull from 'screenfull';
 import InternalAnchor from './InternalAnchor';
+
+import {
+  shouldShowLinkBubbleMenu,
+  initializeLinkBubbleMenu,
+  cleanupLinkBubbleMenu,
+  linkbubbletool
+} from './tools/linkbubble'
 
 // Import tools to register in the toolbar
 import alignCenter from './tools/alignCenter';
@@ -177,6 +186,7 @@ const TOOLS = [
           // Configure all available extensions
           const extensions = [
             StarterKit,
+            ImageResize,
             Youtube,
             // Additional extensions not included in StarterKit
             Underline,
@@ -193,6 +203,7 @@ const TOOLS = [
                 target: null,
               },
             }),
+            linkbubbletool(wrapper),
             TextAlign.configure({
               types: ['heading', 'paragraph'],
               alignments: ['left', 'center', 'right', 'justify'],
@@ -293,8 +304,14 @@ const TOOLS = [
                   wrapper.toggleClass(CONSTANTS.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
                 });
               }
+
+              //  this.initializeLinkBubbleMenu(wrapper, editor);
+              initializeLinkBubbleMenu(wrapper, editor, this.getTool('ss-link-site'));
             },
             onDestroy: () => {
+              //   this.cleanupLinkBubbleMenu(wrapper);
+              cleanupLinkBubbleMenu(wrapper);
+
               const guard = wrapper.data('tiptap-elemental-guard');
               if (guard && guard.proseMirrorElement) {
                 guard.proseMirrorElement.removeEventListener('keydown', guard.handleElementalToggleKeys);
@@ -512,6 +529,24 @@ const TOOLS = [
         container.find(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
       },
 
+      createLinkBubbleMenu: function (wrapper) {
+        const existing = wrapper.find('.tiptap-link-bubble-menu');
+        if (existing.length > 0) {
+          return existing;
+        }
+
+        const menu = $(`
+          <div class="tiptap-link-bubble-menu" aria-label="Link actions">
+            <span class="link-type-badge" data-link-type="raw">Link</span>
+            <button type="button" class="link-edit">Edit link</button>
+            <button type="button" class="link-remove">Remove</button>
+          </div>
+        `);
+
+        wrapper.append(menu);
+        return menu.get(0);
+      },
+
       // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
       normalizeContent: function (content) {
         const registry = this.getToolRegistry();
@@ -542,8 +577,6 @@ const TOOLS = [
       // Add dropdown toggle functionality
       addDropdownToggle: function (button, dropdownMenu) {
         button.on('click', (e) => {
-          
-              console.log('open??? 3');
           e.preventDefault();
           e.stopPropagation();
 

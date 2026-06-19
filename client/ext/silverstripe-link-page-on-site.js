@@ -68,6 +68,35 @@ window.TipTapExtensions['ss-link-site'] = {
     },
 
     /**
+     * Determine if href is a SilverStripe sitetree shortcode link
+     * @param {string} href - Link href value
+     * @returns {boolean}
+     */
+    isSiteTreeHref: function (href) {
+        if (typeof href !== 'string') {
+            return false;
+        }
+
+        return /^\[sitetree_link,id=\d+\]$/.test(href.trim());
+    },
+
+    /**
+     * Open the page link editor for existing sitetree links
+     * @param {Editor} editor - TipTap editor instance
+     * @param {string} href - Current href value
+     * @param {string} selectedText - Current selected link text
+     * @returns {boolean} true when handled, false when href is not sitetree format
+     */
+    openEditorForHref: function (editor, href, selectedText = '') {
+        if (!this.isSiteTreeHref(href)) {
+            return false;
+        }
+
+        this.openSilverStripeDialog(editor, selectedText);
+        return true;
+    },
+
+    /**
      * Open SilverStripe link dialog
      * @param {Editor} editor - TipTap editor instance
      * @param {string} selectedText - Currently selected text

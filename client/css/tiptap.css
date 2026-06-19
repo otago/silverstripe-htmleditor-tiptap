@@ -410,6 +410,57 @@ for the lists dropdown
   background-position: center;
 }
 
+.tiptap-link-bubble-menu {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #c1c9d2;
+  border-radius: 10px;
+  padding: 6px 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+
+.tiptap-link-bubble-menu .link-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #0b5394;
+  background: #e8f1fb;
+}
+
+.tiptap-link-bubble-menu .link-type-badge[data-link-type="sitetree"] {
+  color: #0d652d;
+  background: #e6f4ea;
+}
+
+.tiptap-link-bubble-menu button {
+  border: none;
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #1f1f1f;
+}
+
+.tiptap-link-bubble-menu button:hover {
+  background: #f1f3f4;
+}
+
+.tiptap-link-bubble-menu .link-remove {
+  color: #b42318;
+}
+
+.tiptap-link-bubble-menu .link-remove:hover {
+  background: #fef3f2;
+}
+
 
 /* Generic dropdown styles */
 .tiptap-toolbar .dropdown {
