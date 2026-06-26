@@ -448,10 +448,10 @@ window.TipTapExtensions['ss-link-media'] = {
      */
     insertImage: function (editor, data, file, selectedText) {
         try {
-            console.log('=== insertImage Debug ===');
-            console.log('data:', data);
-            console.log('file:', file);
-            console.log('selectedText:', selectedText);
+            // console.log('=== insertImage Debug ===');
+            // console.log('data:', data);
+            // console.log('file:', file);
+            // console.log('selectedText:', selectedText);
             
             // Build image attributes
             const attrs = {
@@ -466,7 +466,7 @@ window.TipTapExtensions['ss-link-media'] = {
                 'data-loading': data.Loading || null,
             };
 
-            console.log('attrs before cleanup:', attrs);
+           // console.log('attrs before cleanup:', attrs);
 
             // Remove null/undefined attributes
             Object.keys(attrs).forEach(key => {
@@ -475,7 +475,7 @@ window.TipTapExtensions['ss-link-media'] = {
                 }
             });
 
-            console.log('attrs after cleanup:', attrs);
+            //console.log('attrs after cleanup:', attrs);
 
             // Use TipTap's proper node creation for images
             const imageAttrs = {
@@ -488,11 +488,11 @@ window.TipTapExtensions['ss-link-media'] = {
             if (data.Width) imageAttrs.width = data.Width;
             if (data.Height) imageAttrs.height = data.Height;
 
-            console.log('imageAttrs for TipTap:', imageAttrs);
+           // console.log('imageAttrs for TipTap:', imageAttrs);
 
             // Insert the image using TipTap's image command
             if (data.Caption) {
-                console.log('Inserting captioned image with caption:', data.Caption);
+              //  console.log('Inserting captioned image with caption:', data.Caption);
                 // For captioned images, we'll insert HTML since it's complex
                 const captionHtml = `
                     <div class="captionImage ${data.Alignment || ''}" style="width: ${data.Width || 'auto'}px;">
@@ -500,10 +500,10 @@ window.TipTapExtensions['ss-link-media'] = {
                         <p class="caption ${data.Alignment || ''}">${data.Caption}</p>
                     </div>
                 `;
-                console.log('captionHtml:', captionHtml);
+              //  console.log('captionHtml:', captionHtml);
                 editor.chain().focus().insertContent(captionHtml).run();
             } else {
-                console.log('Inserting simple image');
+             //   console.log('Inserting simple image');
                 // For simple images, use the proper TipTap image command
                 editor.chain().focus().setImage(imageAttrs).run();
             }
@@ -525,10 +525,10 @@ window.TipTapExtensions['ss-link-media'] = {
      */
     insertFile: function (editor, data, file, selectedText) {
         try {
-            console.log('=== insertFile Debug ===');
-            console.log('data:', data);
-            console.log('file:', file);
-            console.log('selectedText:', selectedText);
+            // console.log('=== insertFile Debug ===');
+            // console.log('data:', data);
+            // console.log('file:', file);
+            // console.log('selectedText:', selectedText);
             
             // Build shortcode for file link
             let href = '';
@@ -539,7 +539,7 @@ window.TipTapExtensions['ss-link-media'] = {
                         properties: { id: data.ID },
                     }, true);
                     href = shortcode;
-                    console.log('Generated shortcode:', shortcode);
+                 //   console.log('Generated shortcode:', shortcode);
                 } catch (e) {
                     console.warn('Error creating shortcode:', e);
                     href = data.url || data.URL || `/assets/files/${data.ID}`;
@@ -548,7 +548,7 @@ window.TipTapExtensions['ss-link-media'] = {
                 href = data.url || data.URL || (data.ID ? `/assets/files/${data.ID}` : '');
             }
 
-            console.log('Final href:', href);
+           // console.log('Final href:', href);
 
             if (!href) {
                 console.error('No valid href for file link');
@@ -561,22 +561,22 @@ window.TipTapExtensions['ss-link-media'] = {
                 title: data.Description || '',
             };
 
-            console.log('linkAttributes:', linkAttributes);
+         //   console.log('linkAttributes:', linkAttributes);
 
             // Determine link text
             const { from, to } = editor.state.selection;
             const currentSelection = editor.state.doc.textBetween(from, to, '');
             let linkText = selectedText || currentSelection || data.Text || data.filename || data.FileFilename || 'Download File';
 
-            console.log('currentSelection:', currentSelection);
-            console.log('linkText:', linkText);
+            // console.log('currentSelection:', currentSelection);
+            // console.log('linkText:', linkText);
 
             // If there's selected text, replace it with the link
             if (currentSelection) {
-                console.log('Setting link on selected text');
+             //   console.log('Setting link on selected text');
                 editor.chain().focus().setLink(linkAttributes).run();
             } else {
-                console.log('Inserting new link with text');
+             //   console.log('Inserting new link with text');
                 // Insert new link with the provided text using TipTap's proper link command
                 editor.chain()
                     .focus()
