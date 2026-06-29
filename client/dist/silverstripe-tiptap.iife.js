@@ -27177,6 +27177,54 @@ img.ProseMirror-separator {
       return !editor.can().setLink({ href: "#" });
     }
   };
+  const canIndent = (editor) => {
+    return editor.can().chain().focus().liftListItem("listItem").run();
+  };
+  const listindent = {
+    action: "listindent",
+    getToolbarConfig({ tooltips }) {
+      return {
+        type: "button",
+        title: tooltips.indent || "Increase indent",
+        action: "listindent",
+        icon: "indent"
+        // or whatever icon your toolbar uses
+      };
+    },
+    run({ editor }) {
+      console.log("indent");
+      editor.chain().focus().sinkListItem("listItem").run();
+    },
+    isActive() {
+      return false;
+    },
+    isDisabled(editor) {
+      return !canIndent(editor);
+    }
+  };
+  const canOutdent = (editor) => {
+    return editor.can().chain().focus().liftListItem("listItem").run();
+  };
+  const listoutdent = {
+    action: "listoutdent",
+    getToolbarConfig({ tooltips }) {
+      return {
+        type: "button",
+        title: tooltips.outdent || "Decrease indent",
+        action: "listoutdent",
+        icon: "outdent"
+      };
+    },
+    run({ editor }) {
+      editor.chain().focus().liftListItem("listItem").run();
+    },
+    isActive() {
+      return false;
+    },
+    isDisabled(editor) {
+      return !canOutdent(editor);
+    }
+  };
   const hasAncestorListType = (editor, typeName) => {
     const { $from } = editor.state.selection;
     for (let depth = $from.depth; depth > 0; depth -= 1) {
@@ -38527,7 +38575,9 @@ and ensure you are accounting for this risk.
     tableTool,
     clear,
     youtubeTool,
-    pasteTool
+    pasteTool,
+    listindent,
+    listoutdent
   ];
   (function($2) {
     const CONSTANTS2 = {
