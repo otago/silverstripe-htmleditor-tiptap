@@ -48,6 +48,9 @@ import highlight from './tools/highlight';
 import horizontalRule from './tools/horizontalRule';
 import image from './tools/image';
 import italic from './tools/italic';
+import link from './tools/link';
+import listindent from './tools/listindent';
+import listoutdent from './tools/listoutdent';
 import linktool from './tools/link';
 import orderedList from './tools/orderedList';
 import paragraph from './tools/paragraph';
@@ -103,7 +106,9 @@ const TOOLS = [
   table,
   clear,
   youtube,
-  paste
+  paste,
+  listindent,
+  listoutdent
 ];
 
 
