@@ -9,8 +9,8 @@ import BubbleMenu from '@tiptap/extension-bubble-menu';
 import TextAlign from '@tiptap/extension-text-align';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
-import TextStyle from '@tiptap/extension-text-style';
-import Table from '@tiptap/extension-table';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
@@ -18,6 +18,7 @@ import Youtube from '@tiptap/extension-youtube';
 import ImageResize from 'tiptap-extension-resize-image';
 import screenfull from 'screenfull';
 import InternalAnchor from './InternalAnchor';
+import { ImagePlus } from 'tiptap-image-plus';
 
 import {
   shouldShowLinkBubbleMenu,
@@ -50,6 +51,7 @@ import italic from './tools/italic';
 import link from './tools/link';
 import listindent from './tools/listindent';
 import listoutdent from './tools/listoutdent';
+import linktool from './tools/link';
 import orderedList from './tools/orderedList';
 import paragraph from './tools/paragraph';
 import redo from './tools/redo';
@@ -59,7 +61,7 @@ import subscript from './tools/subscript';
 import superscript from './tools/superscript';
 import strikethrough from './tools/strikethrough';
 import table from './tools/table';
-import underline from './tools/underline';
+import underlinetool from './tools/underline';
 import undo from './tools/undo';
 import clear from './tools/clear';
 import youtube from './tools/youtube';
@@ -71,7 +73,7 @@ import htmlSource from './tools/htmlSource';
 const TOOLS = [
   bold,
   italic,
-  underline,
+  underlinetool,
   strikethrough,
   paragraph,
   heading1,
@@ -94,7 +96,7 @@ const TOOLS = [
   highlight,
   subscript,
   superscript,
-  link,
+  linktool,
   removeLink,
   image,
   undo,
@@ -189,24 +191,29 @@ const TOOLS = [
 
           // Configure all available extensions
           const extensions = [
-            StarterKit,
-            ImageResize,
+            StarterKit.configure({
+              link: {
+                openOnClick: false,
+              },
+            }),
+            //ImageResize,
+            ImagePlus,
             Youtube,
             // Additional extensions not included in StarterKit
-            Underline,
+            //Underline,
             Image,
             Highlight,
             InternalAnchor,
-            Link.configure({
-              openOnClick: false,
-              HTMLAttributes: {
-                // Change rel to different value
-                // Allow search engines to follow links(remove nofollow)
-                rel: null,
-                // Remove target entirely so links open in current tab
-                target: null,
-              },
-            }),
+            // Link.configure({
+            //   openOnClick: false,
+            //   HTMLAttributes: {
+            //     // Change rel to different value
+            //     // Allow search engines to follow links(remove nofollow)
+            //     rel: null,
+            //     // Remove target entirely so links open in current tab
+            //     target: null,
+            //   },
+            // }),
             linkbubbletool(wrapper),
             TextAlign.configure({
               types: ['heading', 'paragraph'],

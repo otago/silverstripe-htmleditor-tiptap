@@ -115,15 +115,14 @@ export function initializeLinkBubbleMenu(wrapper, editor, siteLinkTool) {
   proseMirrorElement.addEventListener('mouseleave', handleMouseLeave);
 
   
-  editor.on('selectionUpdate', () => {
+  editor.on('selectionUpdate', ({ editor }) => {
     updateLinkBubbleMenu(wrapper, editor);
   });
 
   wrapper.data('tiptap-link-bubble-guard', {
     proseMirrorElement,
     handlePointerMove,
-    handleMouseLeave,
-    menu,
+    handleMouseLeave
   });
 
   updateLinkBubbleMenu(wrapper, editor);
