@@ -32249,15 +32249,15 @@ ${prefix}
     change: nativeAPI.fullscreenchange,
     error: nativeAPI.fullscreenerror
   };
-  let screenfull = {
+  let screenfull$1 = {
     // eslint-disable-next-line default-param-last
     request(element = document.documentElement, options) {
       return new Promise((resolve, reject) => {
         const onFullScreenEntered = () => {
-          screenfull.off("change", onFullScreenEntered);
+          screenfull$1.off("change", onFullScreenEntered);
           resolve();
         };
-        screenfull.on("change", onFullScreenEntered);
+        screenfull$1.on("change", onFullScreenEntered);
         const returnPromise = element[nativeAPI.requestFullscreen](options);
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenEntered).catch(reject);
@@ -32266,15 +32266,15 @@ ${prefix}
     },
     exit() {
       return new Promise((resolve, reject) => {
-        if (!screenfull.isFullscreen) {
+        if (!screenfull$1.isFullscreen) {
           resolve();
           return;
         }
         const onFullScreenExit = () => {
-          screenfull.off("change", onFullScreenExit);
+          screenfull$1.off("change", onFullScreenExit);
           resolve();
         };
-        screenfull.on("change", onFullScreenExit);
+        screenfull$1.on("change", onFullScreenExit);
         const returnPromise = document[nativeAPI.exitFullscreen]();
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenExit).catch(reject);
@@ -32282,13 +32282,13 @@ ${prefix}
       });
     },
     toggle(element, options) {
-      return screenfull.isFullscreen ? screenfull.exit() : screenfull.request(element, options);
+      return screenfull$1.isFullscreen ? screenfull$1.exit() : screenfull$1.request(element, options);
     },
     onchange(callback) {
-      screenfull.on("change", callback);
+      screenfull$1.on("change", callback);
     },
     onerror(callback) {
-      screenfull.on("error", callback);
+      screenfull$1.on("error", callback);
     },
     on(event, callback) {
       const eventName = eventNameMap[event];
@@ -32304,7 +32304,7 @@ ${prefix}
     },
     raw: nativeAPI
   };
-  Object.defineProperties(screenfull, {
+  Object.defineProperties(screenfull$1, {
     isFullscreen: {
       get: () => Boolean(document[nativeAPI.fullscreenElement])
     },
@@ -32319,9 +32319,9 @@ ${prefix}
     }
   });
   if (!nativeAPI) {
-    screenfull = { isEnabled: false };
+    screenfull$1 = { isEnabled: false };
   }
-  const screenfull$1 = screenfull;
+  const screenfull = screenfull$1;
   const InternalAnchor = Node3.create({
     name: "internalAnchor",
     group: "inline",
@@ -33187,21 +33187,21 @@ ${prefix}
       };
     },
     run({ button, context }) {
-      if (!screenfull$1.isEnabled) {
+      if (!screenfull.isEnabled) {
         return;
       }
       const wrapper = button.closest(`.${context.constants.CSS_CLASSES.WRAPPER}`)[0];
-      if (screenfull$1.isFullscreen) {
-        screenfull$1.exit();
+      if (screenfull.isFullscreen) {
+        screenfull.exit();
         return;
       }
-      screenfull$1.request(wrapper);
+      screenfull.request(wrapper);
     },
     isActive(editor) {
-      return screenfull$1.isEnabled ? screenfull$1.isFullscreen : false;
+      return screenfull.isEnabled ? screenfull.isFullscreen : false;
     },
     isDisabled(editor) {
-      return !screenfull$1.isEnabled;
+      return !screenfull.isEnabled;
     }
   };
   const heading1 = createCommandTool({
@@ -33292,12 +33292,6 @@ ${prefix}
     runArgs: [],
     isActive: (editor) => false
   });
-  const IMAGE_NODE_PRIORITY = ["imageResize", "imagePlus", "image"];
-  function resolveImageNodeType(editor) {
-    var _a;
-    const nodes = ((_a = editor == null ? void 0 : editor.schema) == null ? void 0 : _a.nodes) || {};
-    return IMAGE_NODE_PRIORITY.find((nodeType) => Boolean(nodes[nodeType])) || null;
-  }
   const imageTool = {
     action: "image",
     getToolbarConfig({ tooltips }) {
@@ -33310,25 +33304,16 @@ ${prefix}
     },
     run({ editor }) {
       const src = prompt("Enter image URL:");
-      const nodeType = resolveImageNodeType(editor);
-      if (!src || !nodeType) {
+      if (!src || !editor.can().setImage({ src })) {
         return;
       }
-      const imageContent = { type: nodeType, attrs: { src } };
-      if (!editor.can().insertContent(imageContent)) {
-        return;
-      }
-      editor.chain().focus().insertContent(imageContent).run();
+      editor.chain().focus().setImage({ src }).run();
     },
     isActive(editor) {
       return false;
     },
     isDisabled(editor) {
-      const nodeType = resolveImageNodeType(editor);
-      if (!nodeType) {
-        return true;
-      }
-      return !editor.can().insertContent({ type: nodeType, attrs: { src: "#" } });
+      return !editor.can().setImage({ src: "#" });
     }
   };
   const italic = createCommandTool({
@@ -44993,14 +44978,14 @@ and ensure you are accounting for this risk.
                     handleElementalToggleKeys
                   });
                 }
-                if (screenfull$1.isEnabled) {
+                if (screenfull.isEnabled) {
                   const self = this;
-                  screenfull$1.on("change", () => {
+                  screenfull.on("change", () => {
                     const toolbar = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
                     if (toolbar.length) {
                       self.updateToolbarStates(toolbar, editor2);
                     }
-                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull$1.isFullscreen);
+                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
                   });
                 }
                 initializeLinkBubbleMenu(wrapper, editor2, this.getTool("ss-link-site"));
