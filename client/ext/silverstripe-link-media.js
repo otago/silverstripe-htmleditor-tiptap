@@ -11,6 +11,19 @@ if (!window.TipTapExtensions) {
     window.TipTapExtensions = {};
 }
 
+const IMAGE_NODE_PRIORITY = ['imageResize', 'imagePlus', 'image'];
+
+function resolveImageNodeType(editor) {
+    const nodes = (editor && editor.schema && editor.schema.nodes) || {};
+    for (let i = 0; i < IMAGE_NODE_PRIORITY.length; i++) {
+        const nodeType = IMAGE_NODE_PRIORITY[i];
+        if (nodes[nodeType]) {
+            return nodeType;
+        }
+    }
+    return null;
+}
+
 window.TipTapExtensions['ss-link-media'] = {
     action: 'ss-link-media',
 
@@ -488,6 +501,11 @@ window.TipTapExtensions['ss-link-media'] = {
             if (data.Width) imageAttrs.width = data.Width;
             if (data.Height) imageAttrs.height = data.Height;
 
+            const imageNodeType = resolveImageNodeType(editor);
+            if (!imageNodeType) {
+                return false;
+            }
+
            // console.log('imageAttrs for TipTap:', imageAttrs);
 
             // Insert the image using TipTap's image command
@@ -504,8 +522,12 @@ window.TipTapExtensions['ss-link-media'] = {
                 editor.chain().focus().insertContent(captionHtml).run();
             } else {
              //   console.log('Inserting simple image');
-                // For simple images, use the proper TipTap image command
-                editor.chain().focus().setImage(imageAttrs).run();
+                // For simple images, insert the best available image node type.
+                const imageContent = { type: imageNodeType, attrs: imageAttrs };
+                if (!editor.can().insertContent(imageContent)) {
+                    return false;
+                }
+                editor.chain().focus().insertContent(imageContent).run();
             }
 
             return true;
@@ -626,8 +648,13 @@ window.TipTapExtensions['ss-link-media'] = {
      * @returns {boolean}
      */
     isDisabled: function (editor) {
-        // For media insertion, check if we can insert content
-        return !editor.can().insertContent('<img src="#" />');
+        const nodeType = resolveImageNodeType(editor);
+        if (!nodeType) {
+            return true;
+        }
+        console.log('nodeType', nodeType);
+
+        return !editor.can().insertContent({ type: nodeType, attrs: { src: '#' } });
     },
 
 };

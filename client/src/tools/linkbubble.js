@@ -185,6 +185,8 @@ function createLinkBubbleMenu(wrapper) {
     updateLinkBubbleMenu(wrapper, editor);
   });
 
+  menu.css('position', 'absolute');
+  menu.css('left', '-10000px');
 
   return menu.get(0);
 };

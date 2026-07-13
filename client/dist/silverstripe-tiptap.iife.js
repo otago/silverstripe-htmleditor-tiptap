@@ -32690,7 +32690,7 @@ ${prefix}
       };
     }
   }
-  const ImagePlus = index_default$9.extend({
+  index_default$9.extend({
     name: "imagePlus",
     addOptions() {
       var _a;
@@ -32871,6 +32871,8 @@ ${prefix}
       editor.chain().focus().unsetLink().run();
       updateLinkBubbleMenu(wrapper, editor);
     });
+    menu.css("position", "absolute");
+    menu.css("left", "-10000px");
     return menu.get(0);
   }
   function linkbubbletool(wrapper) {
@@ -33188,6 +33190,12 @@ ${prefix}
     runArgs: [],
     isActive: (editor) => false
   });
+  const IMAGE_NODE_PRIORITY = ["imageResize", "imagePlus", "image"];
+  function resolveImageNodeType(editor) {
+    var _a;
+    const nodes = ((_a = editor == null ? void 0 : editor.schema) == null ? void 0 : _a.nodes) || {};
+    return IMAGE_NODE_PRIORITY.find((nodeType) => Boolean(nodes[nodeType])) || null;
+  }
   const imageTool = {
     action: "image",
     getToolbarConfig({ tooltips }) {
@@ -33200,16 +33208,26 @@ ${prefix}
     },
     run({ editor }) {
       const src = prompt("Enter image URL:");
-      if (!src || !editor.can().setImage({ src })) {
+      const nodeType = resolveImageNodeType(editor);
+      if (!src || !nodeType) {
         return;
       }
-      editor.chain().focus().setImage({ src }).run();
+      const imageContent = { type: nodeType, attrs: { src } };
+      if (!editor.can().insertContent(imageContent)) {
+        return;
+      }
+      editor.chain().focus().insertContent(imageContent).run();
     },
     isActive(editor) {
       return false;
     },
     isDisabled(editor) {
-      return !editor.can().setImage({ src: "#" });
+      const nodeType = resolveImageNodeType(editor);
+      if (!nodeType) {
+        return true;
+      }
+      console.log("nodeType", nodeType);
+      return !editor.can().insertContent({ type: nodeType, attrs: { src: "#" } });
     }
   };
   const italic = createCommandTool({
@@ -33248,7 +33266,7 @@ ${prefix}
     }
   };
   const canIndent = (editor) => {
-    return editor.can().chain().focus().liftListItem("listItem").run();
+    return Boolean(editor && editor.can && editor.can().indent && editor.can().indent());
   };
   const listindent = {
     action: "listindent",
@@ -33262,8 +33280,7 @@ ${prefix}
       };
     },
     run({ editor }) {
-      console.log("indent");
-      editor.chain().focus().sinkListItem("listItem").run();
+      editor.chain().focus().indent().run();
     },
     isActive() {
       return false;
@@ -33273,20 +33290,20 @@ ${prefix}
     }
   };
   const canOutdent = (editor) => {
-    return editor.can().chain().focus().liftListItem("listItem").run();
+    return Boolean(editor && editor.can && editor.can().outdent && editor.can().outdent());
   };
   const listoutdent = {
     action: "listoutdent",
     getToolbarConfig({ tooltips }) {
       return {
         type: "button",
-        title: tooltips.outdent || "Decrease indent",
+        title: tooltips.outdent || "Decrease bullet point indent",
         action: "listoutdent",
         icon: "outdent"
       };
     },
     run({ editor }) {
-      editor.chain().focus().liftListItem("listItem").run();
+      editor.chain().focus().outdent().run();
     },
     isActive() {
       return false;
@@ -44781,8 +44798,8 @@ and ensure you are accounting for this risk.
                   openOnClick: false
                 }
               }),
-              //ImageResize,
-              ImagePlus,
+              ImageResize,
+              //ImagePlus,
               index_default,
               // Additional extensions not included in StarterKit
               //Underline,
@@ -44805,6 +44822,7 @@ and ensure you are accounting for this risk.
                 alignments: ["left", "center", "right", "justify"],
                 defaultAlignment: "left"
               }),
+              // Indent,
               index_default$5,
               index_default$4,
               TextStyle.extend({
@@ -45050,21 +45068,6 @@ and ensure you are accounting for this risk.
             }
           });
           container2.find(`.${CONSTANTS2.CSS_CLASSES.TOOLTIP}.${CONSTANTS2.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
-        },
-        createLinkBubbleMenu: function(wrapper) {
-          const existing = wrapper.find(".tiptap-link-bubble-menu");
-          if (existing.length > 0) {
-            return existing;
-          }
-          const menu = $3(`
-          <div class="tiptap-link-bubble-menu" aria-label="Link actions">
-            <span class="link-type-badge" data-link-type="raw">Link</span>
-            <button type="button" class="link-edit">Edit link</button>
-            <button type="button" class="link-remove">Remove</button>
-          </div>
-        `);
-          wrapper.append(menu);
-          return menu.get(0);
         },
         // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
         normalizeContent: function(content) {
