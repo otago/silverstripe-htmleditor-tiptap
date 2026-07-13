@@ -18,10 +18,10 @@ import Youtube from '@tiptap/extension-youtube';
 import ImageResize from 'tiptap-extension-resize-image';
 import screenfull from 'screenfull';
 import InternalAnchor from './InternalAnchor';
+import { Indent } from './indent';
 import { ImagePlus } from 'tiptap-image-plus';
 
 import {
-  shouldShowLinkBubbleMenu,
   initializeLinkBubbleMenu,
   cleanupLinkBubbleMenu,
   linkbubbletool
@@ -196,8 +196,8 @@ const TOOLS = [
                 openOnClick: false,
               },
             }),
-            //ImageResize,
-            ImagePlus,
+            ImageResize,
+            //ImagePlus,
             Youtube,
             // Additional extensions not included in StarterKit
             //Underline,
@@ -220,6 +220,7 @@ const TOOLS = [
               alignments: ['left', 'center', 'right', 'justify'],
               defaultAlignment: 'left'
             }),
+            Indent,
             Subscript,
             Superscript,
             TextStyle.extend({
@@ -316,11 +317,9 @@ const TOOLS = [
                 });
               }
 
-              //  this.initializeLinkBubbleMenu(wrapper, editor);
               initializeLinkBubbleMenu(wrapper, editor, this.getTool('ss-link-site'));
             },
             onDestroy: () => {
-              //   this.cleanupLinkBubbleMenu(wrapper);
               cleanupLinkBubbleMenu(wrapper);
 
               const guard = wrapper.data('tiptap-elemental-guard');
@@ -540,23 +539,6 @@ const TOOLS = [
         container.find(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
       },
 
-      createLinkBubbleMenu: function (wrapper) {
-        const existing = wrapper.find('.tiptap-link-bubble-menu');
-        if (existing.length > 0) {
-          return existing;
-        }
-
-        const menu = $(`
-          <div class="tiptap-link-bubble-menu" aria-label="Link actions">
-            <span class="link-type-badge" data-link-type="raw">Link</span>
-            <button type="button" class="link-edit">Edit link</button>
-            <button type="button" class="link-remove">Remove</button>
-          </div>
-        `);
-
-        wrapper.append(menu);
-        return menu.get(0);
-      },
 
       // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
       normalizeContent: function (content) {

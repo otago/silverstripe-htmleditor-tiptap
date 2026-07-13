@@ -32249,15 +32249,15 @@ ${prefix}
     change: nativeAPI.fullscreenchange,
     error: nativeAPI.fullscreenerror
   };
-  let screenfull = {
+  let screenfull$1 = {
     // eslint-disable-next-line default-param-last
     request(element = document.documentElement, options) {
       return new Promise((resolve, reject) => {
         const onFullScreenEntered = () => {
-          screenfull.off("change", onFullScreenEntered);
+          screenfull$1.off("change", onFullScreenEntered);
           resolve();
         };
-        screenfull.on("change", onFullScreenEntered);
+        screenfull$1.on("change", onFullScreenEntered);
         const returnPromise = element[nativeAPI.requestFullscreen](options);
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenEntered).catch(reject);
@@ -32266,15 +32266,15 @@ ${prefix}
     },
     exit() {
       return new Promise((resolve, reject) => {
-        if (!screenfull.isFullscreen) {
+        if (!screenfull$1.isFullscreen) {
           resolve();
           return;
         }
         const onFullScreenExit = () => {
-          screenfull.off("change", onFullScreenExit);
+          screenfull$1.off("change", onFullScreenExit);
           resolve();
         };
-        screenfull.on("change", onFullScreenExit);
+        screenfull$1.on("change", onFullScreenExit);
         const returnPromise = document[nativeAPI.exitFullscreen]();
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenExit).catch(reject);
@@ -32282,13 +32282,13 @@ ${prefix}
       });
     },
     toggle(element, options) {
-      return screenfull.isFullscreen ? screenfull.exit() : screenfull.request(element, options);
+      return screenfull$1.isFullscreen ? screenfull$1.exit() : screenfull$1.request(element, options);
     },
     onchange(callback) {
-      screenfull.on("change", callback);
+      screenfull$1.on("change", callback);
     },
     onerror(callback) {
-      screenfull.on("error", callback);
+      screenfull$1.on("error", callback);
     },
     on(event, callback) {
       const eventName = eventNameMap[event];
@@ -32304,7 +32304,7 @@ ${prefix}
     },
     raw: nativeAPI
   };
-  Object.defineProperties(screenfull, {
+  Object.defineProperties(screenfull$1, {
     isFullscreen: {
       get: () => Boolean(document[nativeAPI.fullscreenElement])
     },
@@ -32319,9 +32319,9 @@ ${prefix}
     }
   });
   if (!nativeAPI) {
-    screenfull = { isEnabled: false };
+    screenfull$1 = { isEnabled: false };
   }
-  const screenfull$1 = screenfull;
+  const screenfull = screenfull$1;
   const InternalAnchor = Node3.create({
     name: "internalAnchor",
     group: "inline",
@@ -32347,6 +32347,110 @@ ${prefix}
     },
     renderHTML({ HTMLAttributes }) {
       return ["a", mergeAttributes(HTMLAttributes)];
+    }
+  });
+  const DEFAULT_INDENT_STEP = 20;
+  const parseIndentLevel = (element, step) => {
+    var _a;
+    const styleMarginLeft = ((_a = element == null ? void 0 : element.style) == null ? void 0 : _a.marginLeft) || "";
+    const styleMatch = styleMarginLeft.match(/(-?\d+(?:\.\d+)?)px/);
+    if (styleMatch) {
+      const pixels = Number(styleMatch[1]);
+      if (Number.isFinite(pixels) && pixels > 0) {
+        return Math.round(pixels / step);
+      }
+    }
+    const dataIndent = Number(element == null ? void 0 : element.getAttribute("data-indent"));
+    return Number.isFinite(dataIndent) && dataIndent > 0 ? dataIndent : null;
+  };
+  const Indent = Extension.create({
+    name: "indent",
+    addOptions() {
+      return {
+        types: ["listItem", "paragraph", "heading"],
+        minLevel: 0,
+        maxLevel: 4,
+        // feel free to increase
+        step: DEFAULT_INDENT_STEP
+      };
+    },
+    addGlobalAttributes() {
+      return [
+        {
+          types: this.options.types,
+          attributes: {
+            indent: {
+              renderHTML: (attributes) => {
+                console.log("addGlobalAttributes?");
+                if (attributes.indent > this.options.minLevel) {
+                  return { style: `margin-left: ${attributes.indent * this.options.step}px;` };
+                }
+                return null;
+              },
+              parseHTML: (element) => {
+                const indentLevel = parseIndentLevel(element, this.options.step);
+                return indentLevel && indentLevel > this.options.minLevel ? indentLevel : null;
+              }
+            }
+          }
+        }
+      ];
+    },
+    addCommands() {
+      const setNodeIndentMarkup = (tr2, pos, delta) => {
+        var _a;
+        const node2 = (_a = tr2 == null ? void 0 : tr2.doc) == null ? void 0 : _a.nodeAt(pos);
+        if (node2) {
+          const nextLevel = (node2.attrs.indent || 0) + delta;
+          const { minLevel, maxLevel } = this.options;
+          const indent = nextLevel < minLevel ? minLevel : nextLevel > maxLevel ? maxLevel : nextLevel;
+          if (indent !== node2.attrs.indent) {
+            const { indent: oldIndent, ...currentAttrs } = node2.attrs;
+            const nodeAttrs = indent > minLevel ? { ...currentAttrs, indent } : currentAttrs;
+            return tr2.setNodeMarkup(pos, node2.type, nodeAttrs, node2.marks);
+          }
+        }
+        return tr2;
+      };
+      const updateIndentLevel = (tr2, delta) => {
+        const { doc: doc2, selection } = tr2;
+        if (doc2 && selection && (selection instanceof TextSelection$1 || selection instanceof AllSelection$1)) {
+          const { from, to } = selection;
+          doc2.nodesBetween(from, to, (node2, pos) => {
+            if (this.options.types.includes(node2.type.name)) {
+              tr2 = setNodeIndentMarkup(tr2, pos, delta);
+              return false;
+            }
+            return true;
+          });
+        }
+        return tr2;
+      };
+      const applyIndent = (direction) => () => ({ tr: tr2, state, dispatch: dispatch2 }) => {
+        console.log("here applyIndent? ");
+        const { selection } = state;
+        tr2 = tr2.setSelection(selection);
+        tr2 = updateIndentLevel(tr2, direction);
+        if (tr2.docChanged) {
+          dispatch2 == null ? void 0 : dispatch2(tr2);
+          return true;
+        }
+        return false;
+      };
+      return {
+        indent: applyIndent(1),
+        outdent: applyIndent(-1)
+      };
+    },
+    addKeyboardShortcuts() {
+      return {
+        Tab: () => {
+          return this.editor.commands.indent();
+        },
+        "Shift-Tab": () => {
+          return this.editor.commands.outdent();
+        }
+      };
     }
   });
   const CONSTANTS = {
@@ -33085,21 +33189,21 @@ ${prefix}
       };
     },
     run({ button, context }) {
-      if (!screenfull$1.isEnabled) {
+      if (!screenfull.isEnabled) {
         return;
       }
       const wrapper = button.closest(`.${context.constants.CSS_CLASSES.WRAPPER}`)[0];
-      if (screenfull$1.isFullscreen) {
-        screenfull$1.exit();
+      if (screenfull.isFullscreen) {
+        screenfull.exit();
         return;
       }
-      screenfull$1.request(wrapper);
+      screenfull.request(wrapper);
     },
     isActive(editor) {
-      return screenfull$1.isEnabled ? screenfull$1.isFullscreen : false;
+      return screenfull.isEnabled ? screenfull.isFullscreen : false;
     },
     isDisabled(editor) {
-      return !screenfull$1.isEnabled;
+      return !screenfull.isEnabled;
     }
   };
   const heading1 = createCommandTool({
@@ -33266,7 +33370,7 @@ ${prefix}
     }
   };
   const canIndent = (editor) => {
-    return Boolean(editor && editor.can && editor.can().indent && editor.can().indent());
+    return Boolean(editor && editor.can && editor.can().indent());
   };
   const listindent = {
     action: "listindent",
@@ -33290,7 +33394,7 @@ ${prefix}
     }
   };
   const canOutdent = (editor) => {
-    return Boolean(editor && editor.can && editor.can().outdent && editor.can().outdent());
+    return Boolean(editor && editor.can && editor.can().outdent());
   };
   const listoutdent = {
     action: "listoutdent",
@@ -44822,7 +44926,7 @@ and ensure you are accounting for this risk.
                 alignments: ["left", "center", "right", "justify"],
                 defaultAlignment: "left"
               }),
-              // Indent,
+              Indent,
               index_default$5,
               index_default$4,
               TextStyle.extend({
@@ -44892,14 +44996,14 @@ and ensure you are accounting for this risk.
                     handleElementalToggleKeys
                   });
                 }
-                if (screenfull$1.isEnabled) {
+                if (screenfull.isEnabled) {
                   const self = this;
-                  screenfull$1.on("change", () => {
+                  screenfull.on("change", () => {
                     const toolbar = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
                     if (toolbar.length) {
                       self.updateToolbarStates(toolbar, editor2);
                     }
-                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull$1.isFullscreen);
+                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
                   });
                 }
                 initializeLinkBubbleMenu(wrapper, editor2, this.getTool("ss-link-site"));

@@ -1,6 +1,5 @@
 const canIndent = (editor) => {
-    return editor.can().chain().focus().liftListItem('listItem').run();
-    return editor.can().chain().focus().sinkListItem('listItem').run();
+    return Boolean(editor && editor.can &&  editor.can().indent());
 };
 
 export default {
@@ -16,8 +15,7 @@ export default {
     },
 
     run({ editor }) {
-        console.log("indent");
-        editor.chain().focus().sinkListItem('listItem').run();
+        editor.chain().focus().indent().run();
     },
 
     isActive() {
