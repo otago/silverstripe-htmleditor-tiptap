@@ -32249,15 +32249,15 @@ ${prefix}
     change: nativeAPI.fullscreenchange,
     error: nativeAPI.fullscreenerror
   };
-  let screenfull$1 = {
+  let screenfull = {
     // eslint-disable-next-line default-param-last
     request(element = document.documentElement, options) {
       return new Promise((resolve, reject) => {
         const onFullScreenEntered = () => {
-          screenfull$1.off("change", onFullScreenEntered);
+          screenfull.off("change", onFullScreenEntered);
           resolve();
         };
-        screenfull$1.on("change", onFullScreenEntered);
+        screenfull.on("change", onFullScreenEntered);
         const returnPromise = element[nativeAPI.requestFullscreen](options);
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenEntered).catch(reject);
@@ -32266,15 +32266,15 @@ ${prefix}
     },
     exit() {
       return new Promise((resolve, reject) => {
-        if (!screenfull$1.isFullscreen) {
+        if (!screenfull.isFullscreen) {
           resolve();
           return;
         }
         const onFullScreenExit = () => {
-          screenfull$1.off("change", onFullScreenExit);
+          screenfull.off("change", onFullScreenExit);
           resolve();
         };
-        screenfull$1.on("change", onFullScreenExit);
+        screenfull.on("change", onFullScreenExit);
         const returnPromise = document[nativeAPI.exitFullscreen]();
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenExit).catch(reject);
@@ -32282,13 +32282,13 @@ ${prefix}
       });
     },
     toggle(element, options) {
-      return screenfull$1.isFullscreen ? screenfull$1.exit() : screenfull$1.request(element, options);
+      return screenfull.isFullscreen ? screenfull.exit() : screenfull.request(element, options);
     },
     onchange(callback) {
-      screenfull$1.on("change", callback);
+      screenfull.on("change", callback);
     },
     onerror(callback) {
-      screenfull$1.on("error", callback);
+      screenfull.on("error", callback);
     },
     on(event, callback) {
       const eventName = eventNameMap[event];
@@ -32304,7 +32304,7 @@ ${prefix}
     },
     raw: nativeAPI
   };
-  Object.defineProperties(screenfull$1, {
+  Object.defineProperties(screenfull, {
     isFullscreen: {
       get: () => Boolean(document[nativeAPI.fullscreenElement])
     },
@@ -32319,9 +32319,9 @@ ${prefix}
     }
   });
   if (!nativeAPI) {
-    screenfull$1 = { isEnabled: false };
+    screenfull = { isEnabled: false };
   }
-  const screenfull = screenfull$1;
+  const screenfull$1 = screenfull;
   const InternalAnchor = Node3.create({
     name: "internalAnchor",
     group: "inline",
@@ -32381,7 +32381,6 @@ ${prefix}
           attributes: {
             indent: {
               renderHTML: (attributes) => {
-                console.log("addGlobalAttributes?");
                 if (attributes.indent > this.options.minLevel) {
                   return { style: `margin-left: ${attributes.indent * this.options.step}px;` };
                 }
@@ -32427,7 +32426,6 @@ ${prefix}
         return tr2;
       };
       const applyIndent = (direction) => () => ({ tr: tr2, state, dispatch: dispatch2 }) => {
-        console.log("here applyIndent? ");
         const { selection } = state;
         tr2 = tr2.setSelection(selection);
         tr2 = updateIndentLevel(tr2, direction);
@@ -33189,21 +33187,21 @@ ${prefix}
       };
     },
     run({ button, context }) {
-      if (!screenfull.isEnabled) {
+      if (!screenfull$1.isEnabled) {
         return;
       }
       const wrapper = button.closest(`.${context.constants.CSS_CLASSES.WRAPPER}`)[0];
-      if (screenfull.isFullscreen) {
-        screenfull.exit();
+      if (screenfull$1.isFullscreen) {
+        screenfull$1.exit();
         return;
       }
-      screenfull.request(wrapper);
+      screenfull$1.request(wrapper);
     },
     isActive(editor) {
-      return screenfull.isEnabled ? screenfull.isFullscreen : false;
+      return screenfull$1.isEnabled ? screenfull$1.isFullscreen : false;
     },
     isDisabled(editor) {
-      return !screenfull.isEnabled;
+      return !screenfull$1.isEnabled;
     }
   };
   const heading1 = createCommandTool({
@@ -33330,7 +33328,6 @@ ${prefix}
       if (!nodeType) {
         return true;
       }
-      console.log("nodeType", nodeType);
       return !editor.can().insertContent({ type: nodeType, attrs: { src: "#" } });
     }
   };
@@ -44996,14 +44993,14 @@ and ensure you are accounting for this risk.
                     handleElementalToggleKeys
                   });
                 }
-                if (screenfull.isEnabled) {
+                if (screenfull$1.isEnabled) {
                   const self = this;
-                  screenfull.on("change", () => {
+                  screenfull$1.on("change", () => {
                     const toolbar = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
                     if (toolbar.length) {
                       self.updateToolbarStates(toolbar, editor2);
                     }
-                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
+                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull$1.isFullscreen);
                   });
                 }
                 initializeLinkBubbleMenu(wrapper, editor2, this.getTool("ss-link-site"));

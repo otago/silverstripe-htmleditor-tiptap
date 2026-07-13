@@ -40,7 +40,6 @@ export const Indent = Extension.create({
                 attributes: {
                     indent: {
                         renderHTML: attributes => {
-                            console.log('addGlobalAttributes?');
                             if (attributes.indent > this.options.minLevel) {
                                 return { style: `margin-left: ${attributes.indent * this.options.step}px;` };
                             }
@@ -104,7 +103,6 @@ export const Indent = Extension.create({
             return tr
         }
         const applyIndent = direction => () => ({ tr, state, dispatch }) => {
-            console.log('here applyIndent? ');
             const { selection } = state
             tr = tr.setSelection(selection)
             tr = updateIndentLevel(tr, direction)
