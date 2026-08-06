@@ -418,7 +418,13 @@ for the lists dropdown
   background-position: center;
 }
 
-.tiptap-link-bubble-menu {
+/* Hide the position controller for image resizing */
+div[data-resize-image-ui="position-controller"] {
+  display: none !important;
+}
+
+.tiptap-link-bubble-menu,
+.tiptap-image-bubble-menu {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -446,7 +452,8 @@ for the lists dropdown
   background: #e6f4ea;
 }
 
-.tiptap-link-bubble-menu button {
+.tiptap-link-bubble-menu button,
+.tiptap-image-bubble-menu button {
   border: none;
   border-radius: 6px;
   padding: 5px 8px;
@@ -457,7 +464,8 @@ for the lists dropdown
   color: #1f1f1f;
 }
 
-.tiptap-link-bubble-menu button:hover {
+.tiptap-link-bubble-menu button:hover,
+.tiptap-image-bubble-menu button:hover {
   background: #f1f3f4;
 }
 
@@ -466,6 +474,14 @@ for the lists dropdown
 }
 
 .tiptap-link-bubble-menu .link-remove:hover {
+  background: #fef3f2;
+}
+
+.tiptap-image-bubble-menu .image-remove {
+  color: #b42318;
+}
+
+.tiptap-image-bubble-menu .image-remove:hover {
   background: #fef3f2;
 }
 

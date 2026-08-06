@@ -32451,390 +32451,14 @@ ${prefix}
       };
     }
   });
-  const CONSTANTS = {
-    wrapperStyle: {
-      display: "flex",
-      width: "100%"
-    },
-    containerStyle: {
-      cursor: "pointer"
-    },
-    MOBILE_BREAKPOINT: 768,
-    ICON_SIZE: "24px",
-    CONTROLLER_HEIGHT: "25px",
-    DOT_SIZE: {
-      MOBILE: 16,
-      DESKTOP: 9
-    },
-    DOT_POSITION: {
-      MOBILE: "-8px",
-      DESKTOP: "-4px"
-    },
-    COLORS: {
-      BORDER: "#6C6C6C",
-      BACKGROUND: "rgba(255, 255, 255, 1)"
-    },
-    ICONS: {
-      LEFT: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/format_align_left/default/20px.svg",
-      CENTER: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/format_align_center/default/20px.svg",
-      RIGHT: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/format_align_right/default/20px.svg"
-    }
-  };
-  const utils = {
-    isMobile() {
-      return document.documentElement.clientWidth < CONSTANTS.MOBILE_BREAKPOINT;
-    },
-    getDotPosition() {
-      return utils.isMobile() ? CONSTANTS.DOT_POSITION.MOBILE : CONSTANTS.DOT_POSITION.DESKTOP;
-    },
-    getDotSize() {
-      return utils.isMobile() ? CONSTANTS.DOT_SIZE.MOBILE : CONSTANTS.DOT_SIZE.DESKTOP;
-    },
-    clearContainerBorder(container2) {
-      const containerStyle = container2.getAttribute("style");
-      const newStyle = containerStyle === null || containerStyle === void 0 ? void 0 : containerStyle.replace("border: 1px dashed #6C6C6C;", "").replace("border: 1px dashed rgb(108, 108, 108)", "");
-      container2.setAttribute("style", newStyle);
-    },
-    removeResizeElements(container2) {
-      if (container2.childElementCount > 3) {
-        for (let i2 = 0; i2 < 5; i2++) {
-          container2.removeChild(container2.lastChild);
-        }
-      }
-    }
-  };
-  class StyleManager {
-    static getContainerStyle(inline2, width) {
-      const baseStyle = `width: ${width || "100%"}; height: auto; cursor: pointer;`;
-      const inlineStyle = inline2 ? "display: inline-block;" : "";
-      return `${baseStyle} ${inlineStyle}`;
-    }
-    static getWrapperStyle(inline2) {
-      return inline2 ? "display: inline-block; float: left; padding-right: 8px;" : "display: flex";
-    }
-    static getPositionControllerStyle(inline2) {
-      const width = inline2 ? "66px" : "100px";
-      return `
-      position: absolute; 
-      top: 15px; 
-      left: 50%; 
-      width: ${width}; 
-      height: ${CONSTANTS.CONTROLLER_HEIGHT}; 
-      z-index: 999; 
-      background-color: ${CONSTANTS.COLORS.BACKGROUND}; 
-      border-radius: 3px; 
-      border: 1px solid ${CONSTANTS.COLORS.BORDER}; 
-      cursor: pointer; 
-      transform: translate(-50%, -50%); 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      padding: 0 6px;
-    `.replace(/\s+/g, " ").trim();
-    }
-    static getDotStyle(index) {
-      const dotPosition = utils.getDotPosition();
-      const dotSize = utils.getDotSize();
-      const positions = [
-        `top: ${dotPosition}; left: ${dotPosition}; cursor: nwse-resize; z-index: 999;`,
-        `top: ${dotPosition}; right: ${dotPosition}; cursor: nesw-resize; z-index: 999;`,
-        `bottom: ${dotPosition}; left: ${dotPosition}; cursor: nesw-resize; z-index: 999;`,
-        `bottom: ${dotPosition}; right: ${dotPosition}; cursor: nwse-resize; z-index: 999;`
-      ];
-      return `
-      position: absolute; 
-      width: ${dotSize}px; 
-      height: ${dotSize}px; 
-      border: 1.5px solid ${CONSTANTS.COLORS.BORDER}; 
-      border-radius: 50%; 
-      box-shadow: 2px 2px 5px black;
-      background-color: white;
-      ${positions[index]}
-    `.replace(/\s+/g, " ").trim();
-    }
-  }
-  class PositionController {
-    constructor(elements, inline2, dispatchNodeView) {
-      this.elements = elements;
-      this.inline = inline2;
-      this.dispatchNodeView = dispatchNodeView;
-    }
-    createControllerIcon(src) {
-      const controller = document.createElement("img");
-      controller.setAttribute("src", src);
-      controller.setAttribute("style", `width: ${CONSTANTS.ICON_SIZE}; height: ${CONSTANTS.ICON_SIZE}; cursor: pointer;`);
-      controller.addEventListener("mouseover", (e) => {
-        e.target.style.opacity = "0.6";
-      });
-      controller.addEventListener("mouseout", (e) => {
-        e.target.style.opacity = "1";
-      });
-      return controller;
-    }
-    handleLeftClick() {
-      if (!this.inline) {
-        this.elements.wrapper.style.justifyContent = "left";
-      } else {
-        const style2 = "display: inline-block; float: left; padding-right: 8px;";
-        this.elements.wrapper.setAttribute("style", style2);
-        this.elements.container.setAttribute("style", style2);
-      }
-      this.dispatchNodeView();
-    }
-    handleCenterClick() {
-      this.elements.wrapper.style.justifyContent = "center";
-      this.dispatchNodeView();
-    }
-    handleRightClick() {
-      if (!this.inline) {
-        this.elements.wrapper.style.justifyContent = "right";
-      } else {
-        const style2 = "display: inline-block; float: right; padding-left: 8px;";
-        this.elements.wrapper.setAttribute("style", style2);
-        this.elements.container.setAttribute("style", style2);
-      }
-      this.dispatchNodeView();
-    }
-    createPositionControls() {
-      const controller = document.createElement("div");
-      controller.setAttribute("style", StyleManager.getPositionControllerStyle(this.inline));
-      const leftController = this.createControllerIcon(CONSTANTS.ICONS.LEFT);
-      leftController.addEventListener("click", () => this.handleLeftClick());
-      controller.appendChild(leftController);
-      if (!this.inline) {
-        const centerController = this.createControllerIcon(CONSTANTS.ICONS.CENTER);
-        centerController.addEventListener("click", () => this.handleCenterClick());
-        controller.appendChild(centerController);
-      }
-      const rightController = this.createControllerIcon(CONSTANTS.ICONS.RIGHT);
-      rightController.addEventListener("click", () => this.handleRightClick());
-      controller.appendChild(rightController);
-      this.elements.container.appendChild(controller);
-      return this;
-    }
-  }
-  class ResizeController {
-    constructor(elements, dispatchNodeView) {
-      this.state = {
-        isResizing: false,
-        startX: 0,
-        startWidth: 0
-      };
-      this.handleMouseMove = (e, index) => {
-        if (!this.state.isResizing)
-          return;
-        const deltaX = index % 2 === 0 ? -(e.clientX - this.state.startX) : e.clientX - this.state.startX;
-        const newWidth = this.state.startWidth + deltaX;
-        const containerWidth = this.elements.wrapper.offsetWidth;
-        let percentageWidth = newWidth / containerWidth * 100;
-        percentageWidth = percentageWidth > 100 ? 100 : percentageWidth;
-        this.elements.container.style.width = percentageWidth + "%";
-        this.elements.img.style.width = "100%";
-      };
-      this.handleMouseUp = () => {
-        if (this.state.isResizing) {
-          this.state.isResizing = false;
-        }
-        this.dispatchNodeView();
-      };
-      this.handleTouchMove = (e, index) => {
-        if (!this.state.isResizing)
-          return;
-        const deltaX = index % 2 === 0 ? -(e.touches[0].clientX - this.state.startX) : e.touches[0].clientX - this.state.startX;
-        const newWidth = this.state.startWidth + deltaX;
-        const containerWidth = this.elements.wrapper.offsetWidth;
-        let percentageWidth = newWidth / containerWidth * 100;
-        percentageWidth = percentageWidth > 100 ? 100 : percentageWidth;
-        this.elements.container.style.width = percentageWidth + "%";
-        this.elements.img.style.width = "100%";
-      };
-      this.handleTouchEnd = () => {
-        if (this.state.isResizing) {
-          this.state.isResizing = false;
-        }
-        this.dispatchNodeView();
-      };
-      this.elements = elements;
-      this.dispatchNodeView = dispatchNodeView;
-    }
-    createResizeHandle(index) {
-      const dot = document.createElement("div");
-      dot.setAttribute("style", StyleManager.getDotStyle(index));
-      dot.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        this.state.isResizing = true;
-        this.state.startX = e.clientX;
-        this.state.startWidth = this.elements.container.offsetWidth;
-        const onMouseMove = (e2) => this.handleMouseMove(e2, index);
-        const onMouseUp = () => {
-          this.handleMouseUp();
-          document.removeEventListener("mousemove", onMouseMove);
-          document.removeEventListener("mouseup", onMouseUp);
-        };
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-      });
-      dot.addEventListener("touchstart", (e) => {
-        e.cancelable && e.preventDefault();
-        this.state.isResizing = true;
-        this.state.startX = e.touches[0].clientX;
-        this.state.startWidth = this.elements.container.offsetWidth;
-        const onTouchMove = (e2) => this.handleTouchMove(e2, index);
-        const onTouchEnd = () => {
-          this.handleTouchEnd();
-          document.removeEventListener("touchmove", onTouchMove);
-          document.removeEventListener("touchend", onTouchEnd);
-        };
-        document.addEventListener("touchmove", onTouchMove);
-        document.addEventListener("touchend", onTouchEnd);
-      }, { passive: false });
-      return dot;
-    }
-  }
-  class ImageNodeView {
-    constructor(context, inline2) {
-      this.clearContainerBorder = () => {
-        utils.clearContainerBorder(this.elements.container);
-      };
-      this.dispatchNodeView = () => {
-        const { view, getPos } = this.context;
-        if (typeof getPos === "function") {
-          this.clearContainerBorder();
-          const newAttrs = Object.assign(Object.assign({}, this.context.node.attrs), { width: this.elements.container.style.width, alignment: this.elements.wrapper.style.justifyContent });
-          view.dispatch(view.state.tr.setNodeMarkup(getPos(), null, newAttrs));
-        }
-      };
-      this.removeResizeElements = () => {
-        utils.removeResizeElements(this.elements.container);
-      };
-      this.context = context;
-      this.inline = inline2;
-      this.elements = this.createElements();
-    }
-    createElements() {
-      const wrapper = document.createElement("div");
-      wrapper.classList.add("image-plus-wrapper");
-      const container2 = document.createElement("div");
-      container2.classList.add("image-plus-container");
-      container2.style.maxHeight = "100%";
-      container2.style.overflow = "visible";
-      const img = document.createElement("img");
-      img.classList.add("image-plus-img");
-      img.style.maxHeight = "100%";
-      img.style.overflow = "visible";
-      return {
-        wrapper,
-        container: container2,
-        img
-      };
-    }
-    setupImageAttributes() {
-      Object.entries(this.context.node.attrs).forEach(([key, value]) => {
-        if (value === void 0 || value === null || key === "width")
-          return;
-        this.elements.img.setAttribute(key, value);
-      });
-      if (this.context.node.attrs.width) {
-        this.elements.img.style.width = "100%";
-      }
-    }
-    setupDOMStructure() {
-      const { wrapperStyle, containerStyle } = CONSTANTS;
-      const { containerStyle: containerStyleOptions, wrapperStyle: wrapperStyleOptions } = this.context.options;
-      const containerWidth = this.context.node.attrs.width || "fit-content";
-      Object.assign(this.elements.wrapper.style, Object.assign(Object.assign(Object.assign({}, wrapperStyleOptions), wrapperStyle), { justifyContent: this.context.node.attrs.alignment }));
-      this.elements.wrapper.appendChild(this.elements.container);
-      Object.assign(this.elements.container.style, Object.assign(Object.assign(Object.assign({}, containerStyleOptions), containerStyle), { width: containerWidth }));
-      this.elements.container.appendChild(this.elements.img);
-    }
-    createPositionController() {
-      const positionController = new PositionController(this.elements, this.inline, this.dispatchNodeView);
-      positionController.createPositionControls();
-    }
-    createResizeHandler() {
-      const resizeHandler = new ResizeController(this.elements, this.dispatchNodeView);
-      Array.from({ length: 4 }, (_, index) => {
-        const dot = resizeHandler.createResizeHandle(index);
-        this.elements.container.appendChild(dot);
-      });
-    }
-    setupContainerClick() {
-      this.elements.container.addEventListener("click", () => {
-        var _a;
-        const isMobile = utils.isMobile();
-        isMobile && ((_a = document.querySelector(".ProseMirror-focused")) === null || _a === void 0 ? void 0 : _a.blur());
-        this.removeResizeElements();
-        this.createPositionController();
-        Object.assign(this.elements.container.style, Object.assign({ position: "relative", border: `1px dashed ${CONSTANTS.COLORS.BORDER}` }, this.context.options.containerStyle));
-        this.createResizeHandler();
-      });
-    }
-    setupContentClick() {
-      document.addEventListener("click", (e) => {
-        const target = e.target;
-        const isClickInside = this.elements.container.contains(target) || target.style.cssText === `width: ${CONSTANTS.ICON_SIZE}; height: ${CONSTANTS.ICON_SIZE}; cursor: pointer;`;
-        if (!isClickInside) {
-          this.clearContainerBorder();
-          this.removeResizeElements();
-        }
-      });
-    }
-    initialize() {
-      this.setupDOMStructure();
-      this.setupImageAttributes();
-      const { editable } = this.context.editor.options;
-      if (!editable)
-        return { dom: this.elements.container };
-      this.setupContainerClick();
-      this.setupContentClick();
-      return {
-        dom: this.elements.wrapper
-      };
-    }
-  }
-  index_default$9.extend({
-    name: "imagePlus",
-    addOptions() {
-      var _a;
-      return Object.assign(Object.assign({}, (_a = this.parent) === null || _a === void 0 ? void 0 : _a.call(this)), { wrapperStyle: {}, containerStyle: {} });
-    },
-    addAttributes() {
-      var _a;
-      this.options.inline;
-      return Object.assign(Object.assign({}, (_a = this.parent) === null || _a === void 0 ? void 0 : _a.call(this)), { width: {
-        default: "",
-        parseHTML: (element) => {
-          const width = element.style.width;
-          if (typeof width === "string" && width.includes("%")) {
-            return width;
-          }
-          return "";
-        }
-      }, alignment: {
-        default: "center",
-        parseHTML: (element) => {
-          return element.getAttribute("alignment") || "center";
-        }
-      } });
-    },
-    addNodeView() {
-      return ({ node: node2, editor, getPos }) => {
-        const inline2 = this.options.inline;
-        const context = {
-          node: node2,
-          editor,
-          options: this.options,
-          view: editor.view,
-          getPos: typeof getPos === "function" ? getPos : () => void 0
-        };
-        const nodeView = new ImageNodeView(context, inline2);
-        return nodeView.initialize();
-      };
-    }
-  });
+  const IMAGE_NODE_TYPES = ["imageResize", "imagePlus", "image"];
   function shouldShowLinkBubbleMenu(editor) {
     const href = (editor.getAttributes("link").href || "").trim();
     return Boolean(href);
+  }
+  function shouldShowImageBubbleMenu(editor) {
+    const { selection } = editor.state;
+    return selection instanceof NodeSelection$1 && Boolean(selection.node && IMAGE_NODE_TYPES.includes(selection.node.type.name));
   }
   function isSilverStripeSiteTreeHref(href) {
     if (typeof href !== "string") {
@@ -32853,8 +32477,19 @@ ${prefix}
     badge.text(isSiteTree ? "Site tree link" : "Raw URL");
     badge.attr("data-link-type", isSiteTree ? "sitetree" : "raw");
   }
+  function updateImageBubbleMenu(wrapper, editor) {
+    const menu = wrapper.find(".tiptap-image-bubble-menu");
+    if (menu.length === 0) {
+      return;
+    }
+    const { selection } = editor.state;
+    const selectedNode = selection instanceof NodeSelection$1 ? selection.node : null;
+    const isImage = Boolean(selectedNode && IMAGE_NODE_TYPES.includes(selectedNode.type.name));
+    menu.attr("data-image-selected", isImage ? "true" : "false");
+  }
   function openLinkEditorForSelection(editor, siteLinkTool) {
     const currentLink = editor.getAttributes("link");
+    console.log(currentLink);
     const currentHref = (currentLink.href || "").trim();
     if (!currentHref) {
       return;
@@ -32880,9 +32515,29 @@ ${prefix}
     const nextAttributes = { ...currentLink, href };
     editor.chain().focus().setLink(nextAttributes).run();
   }
-  function initializeLinkBubbleMenu(wrapper, editor, siteLinkTool) {
+  function openImageEditorForSelection(editor, mediaTool) {
+    console.log(mediaTool);
+    if (mediaTool && typeof mediaTool.openImageEditor === "function") {
+      mediaTool.openImageEditor(editor);
+      return;
+    }
+    if (mediaTool && typeof mediaTool.openFileLinkDialog === "function") {
+      mediaTool.openFileLinkDialog(editor, "", { replaceSelection: true });
+    }
+  }
+  function deleteSelectedImage(editor) {
+    editor.chain().focus().deleteSelection().run();
+  }
+  function getScrollTarget(wrapper) {
+    if (!wrapper || typeof wrapper.get !== "function") {
+      return void 0;
+    }
+    return wrapper.get(0) || void 0;
+  }
+  function initializeLinkBubbleMenu(wrapper, editor, siteLinkTool, mediaTool) {
     wrapper.data("editor", editor);
     wrapper.data("siteLinkTool", siteLinkTool);
+    wrapper.data("mediaTool", mediaTool);
     const proseMirror = wrapper.find(".tiptap-link-bubble-menu");
     if (proseMirror.length === 0) {
       return;
@@ -32928,6 +32583,22 @@ ${prefix}
     });
     updateLinkBubbleMenu(wrapper, editor);
   }
+  function initializeImageBubbleMenu(wrapper, editor, mediaTool) {
+    wrapper.data("editor", editor);
+    wrapper.data("mediaTool", mediaTool);
+    const proseMirror = wrapper.find(".tiptap-image-bubble-menu");
+    if (proseMirror.length === 0) {
+      return;
+    }
+    const proseMirrorElement = proseMirror[0];
+    editor.on("selectionUpdate", ({ editor: editor2 }) => {
+      updateImageBubbleMenu(wrapper, editor2);
+    });
+    wrapper.data("tiptap-image-bubble-guard", {
+      proseMirrorElement
+    });
+    updateImageBubbleMenu(wrapper, editor);
+  }
   function cleanupLinkBubbleMenu(wrapper) {
     const guard = wrapper.data("tiptap-link-bubble-guard");
     if (!guard) {
@@ -32937,17 +32608,19 @@ ${prefix}
       guard.proseMirrorElement.removeEventListener("pointermove", guard.handlePointerMove);
       guard.proseMirrorElement.removeEventListener("mouseleave", guard.handleMouseLeave);
     }
-    if (guard.menu) {
-      guard.menu.off("mousedown");
-      guard.menu.off("click", ".link-edit");
-      guard.menu.off("click", ".link-remove");
-    }
     wrapper.removeData("tiptap-link-bubble-guard");
+  }
+  function cleanupImageBubbleMenu(wrapper) {
+    const guard = wrapper.data("tiptap-image-bubble-guard");
+    if (!guard) {
+      return;
+    }
+    wrapper.removeData("tiptap-image-bubble-guard");
   }
   function createLinkBubbleMenu(wrapper) {
     const existing = wrapper.find(".tiptap-link-bubble-menu");
     if (existing.length > 0) {
-      return existing;
+      return existing.get(0);
     }
     const menu = $(`
           <div class="tiptap-link-bubble-menu" aria-label="Link actions">
@@ -32961,6 +32634,7 @@ ${prefix}
       event.preventDefault();
     });
     menu.on("click", ".link-edit", (event) => {
+      console.log("click edit?");
       const editor = wrapper.data("editor");
       event.preventDefault();
       const siteLinkTool = wrapper.data("siteLinkTool");
@@ -32968,6 +32642,7 @@ ${prefix}
       updateLinkBubbleMenu(wrapper, editor);
     });
     menu.on("click", ".link-remove", (event) => {
+      console.log("click remove?");
       const editor = wrapper.data("editor");
       event.preventDefault();
       editor.chain().focus().unsetLink().run();
@@ -32977,11 +32652,57 @@ ${prefix}
     menu.css("left", "-10000px");
     return menu.get(0);
   }
+  function createImageBubbleMenu(wrapper) {
+    const existing = wrapper.find(".tiptap-image-bubble-menu");
+    if (existing.length > 0) {
+      return existing.get(0);
+    }
+    const menu = $(`
+          <div class="tiptap-image-bubble-menu" aria-label="Image actions">
+            <button type="button" class="image-edit">Edit</button>
+            <button type="button" class="image-remove">Delete</button>
+          </div>
+        `);
+    wrapper.append(menu);
+    menu.on("mousedown", (event) => {
+      event.preventDefault();
+    });
+    menu.on("click", ".image-edit", (event) => {
+      console.log("image edit?");
+      const editor = wrapper.data("editor");
+      const mediaTool = wrapper.data("mediaTool");
+      event.preventDefault();
+      openImageEditorForSelection(editor, mediaTool);
+      updateImageBubbleMenu(wrapper, editor);
+    });
+    menu.on("click", ".image-remove", (event) => {
+      const editor = wrapper.data("editor");
+      console.log("image remove?");
+      event.preventDefault();
+      deleteSelectedImage(editor);
+      updateImageBubbleMenu(wrapper, editor);
+    });
+    menu.css("position", "absolute");
+    menu.css("left", "-10000px");
+    return menu.get(0);
+  }
   function linkbubbletool(wrapper) {
     return index_default$7.configure({
       element: createLinkBubbleMenu(wrapper),
+      pluginKey: "linkBubbleMenu",
+      scrollTarget: getScrollTarget(wrapper),
       shouldShow: ({ editor, state }) => {
         return shouldShowLinkBubbleMenu(editor);
+      }
+    });
+  }
+  function imagebubbletool(wrapper) {
+    return index_default$7.configure({
+      element: createImageBubbleMenu(wrapper),
+      pluginKey: "imageBubbleMenu",
+      scrollTarget: getScrollTarget(wrapper),
+      shouldShow: ({ editor, state }) => {
+        return shouldShowImageBubbleMenu(editor);
       }
     });
   }
@@ -44816,8 +44537,43 @@ and ensure you are accounting for this risk.
     listindent,
     listoutdent
   ];
+  const imageIdAttribute = {
+    default: null,
+    parseHTML: (element) => {
+      const raw = element.getAttribute("data-id") || element.getAttribute("dataid");
+      if (!raw) {
+        return null;
+      }
+      const parsed = parseInt(raw, 10);
+      return Number.isNaN(parsed) ? null : parsed;
+    },
+    renderHTML: (attributes) => {
+      if (attributes["data-id"] === null || attributes["data-id"] === void 0 || attributes["data-id"] === "") {
+        return {};
+      }
+      return { "data-id": String(attributes["data-id"]) };
+    }
+  };
+  const TipTapImage = index_default$9.extend({
+    addAttributes() {
+      var _a;
+      return {
+        ...((_a = this.parent) == null ? void 0 : _a.call(this)) || {},
+        "data-id": imageIdAttribute
+      };
+    }
+  });
+  const TipTapImageResize = ImageResize.extend({
+    addAttributes() {
+      var _a;
+      return {
+        ...((_a = this.parent) == null ? void 0 : _a.call(this)) || {},
+        "data-id": imageIdAttribute
+      };
+    }
+  });
   (function($2) {
-    const CONSTANTS2 = {
+    const CONSTANTS = {
       // Timing constants
       TOOLBAR_UPDATE_DELAY: 10,
       SUBMENU_HIDE_DELAY: 200,
@@ -44875,7 +44631,7 @@ and ensure you are accounting for this risk.
           }
           this.data("tiptap-tools", this.buildToolRegistry(config));
           if (!this.data("tiptap-initialized")) {
-            const wrapper = $3(`<div class="${CONSTANTS2.CSS_CLASSES.WRAPPER}"></div>`);
+            const wrapper = $3(`<div class="${CONSTANTS.CSS_CLASSES.WRAPPER}"></div>`);
             this.after(wrapper);
             this.hide();
             const extensions = [
@@ -44884,29 +44640,19 @@ and ensure you are accounting for this risk.
                   openOnClick: false
                 }
               }),
-              ImageResize,
+              TipTapImageResize,
               //ImagePlus,
               index_default,
               // Additional extensions not included in StarterKit
               //Underline,
-              index_default$9,
+              TipTapImage,
               index_default$8,
               InternalAnchor,
-              // Link.configure({
-              //   openOnClick: false,
-              //   HTMLAttributes: {
-              //     // Change rel to different value
-              //     // Allow search engines to follow links(remove nofollow)
-              //     rel: null,
-              //     // Remove target entirely so links open in current tab
-              //     target: null,
-              //   },
-              // }),
               linkbubbletool(wrapper),
+              imagebubbletool(wrapper),
               index_default$6.configure({
                 types: ["heading", "paragraph"],
-                alignments: ["left", "center", "right", "justify"],
-                defaultAlignment: "left"
+                alignments: ["left", "center", "right", "justify"]
               }),
               Indent,
               index_default$5,
@@ -44944,7 +44690,7 @@ and ensure you are accounting for this risk.
               }),
               Table.configure({
                 resizable: true,
-                cellMinWidth: CONSTANTS2.TABLE_MIN_WIDTH
+                cellMinWidth: CONSTANTS.TABLE_MIN_WIDTH
               }),
               index_default$3,
               index_default$2,
@@ -44964,7 +44710,7 @@ and ensure you are accounting for this risk.
                 if (config.toolbar !== false) {
                   this.createToolbar(wrapper, editor2, config);
                 }
-                const proseMirrorElement = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.PROSEMIRROR}`)[0];
+                const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`)[0];
                 if (proseMirrorElement) {
                   const handleElementalToggleKeys = (event) => {
                     if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
@@ -44981,17 +44727,19 @@ and ensure you are accounting for this risk.
                 if (screenfull.isEnabled) {
                   const self = this;
                   screenfull.on("change", () => {
-                    const toolbar = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
+                    const toolbar = wrapper.find(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
                     if (toolbar.length) {
                       self.updateToolbarStates(toolbar, editor2);
                     }
-                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
+                    wrapper.toggleClass(CONSTANTS.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
                   });
                 }
-                initializeLinkBubbleMenu(wrapper, editor2, this.getTool("ss-link-site"));
+                initializeLinkBubbleMenu(wrapper, editor2, this.getTool("ss-link-site"), this.getTool("ss-link-media"));
+                initializeImageBubbleMenu(wrapper, editor2, this.getTool("ss-link-media"));
               },
               onDestroy: () => {
                 cleanupLinkBubbleMenu(wrapper);
+                cleanupImageBubbleMenu(wrapper);
                 const guard = wrapper.data("tiptap-elemental-guard");
                 if (guard && guard.proseMirrorElement) {
                   guard.proseMirrorElement.removeEventListener("keydown", guard.handleElementalToggleKeys);
@@ -45030,7 +44778,7 @@ and ensure you are accounting for this risk.
                 tooltip.remove();
               }
             });
-            wrapper.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
+            wrapper.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
               const submenu = $3(this).data("submenu");
               if (submenu) {
                 submenu.remove();
@@ -45065,7 +44813,7 @@ and ensure you are accounting for this risk.
         },
         // Helper method to create a configurable toolbar
         createToolbar: function(wrapper, editor, config) {
-          const toolbar = $3(`<div class="${CONSTANTS2.CSS_CLASSES.TOOLBAR}"></div>`);
+          const toolbar = $3(`<div class="${CONSTANTS.CSS_CLASSES.TOOLBAR}"></div>`);
           this.initializeExtensions(editor, config);
           this.createToolbarItems(toolbar, config, editor);
           this.createToolbarEventListeners(wrapper, toolbar, editor);
@@ -45099,12 +44847,12 @@ and ensure you are accounting for this risk.
               };
             }
             if (itemConfig.action === "separator") {
-              const separator = $3(`<div class="${CONSTANTS2.CSS_CLASSES.SEPARATOR}"></div>`);
+              const separator = $3(`<div class="${CONSTANTS.CSS_CLASSES.SEPARATOR}"></div>`);
               toolbar.append(separator);
               return;
             }
             if (itemConfig.action === "newline") {
-              const lineBreak = $3(`<div class="${CONSTANTS2.CSS_CLASSES.NEWLINE}"></div>`);
+              const lineBreak = $3(`<div class="${CONSTANTS.CSS_CLASSES.NEWLINE}"></div>`);
               toolbar.append(lineBreak);
               return;
             }
@@ -45126,7 +44874,7 @@ and ensure you are accounting for this risk.
           });
           if (!wrapper.data("tiptap-outside-handlers")) {
             const handleOutsideInteraction = (event) => {
-              if ($3(event.target).closest(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN}`).length > 0) {
+              if ($3(event.target).closest(`.${CONSTANTS.CSS_CLASSES.DROPDOWN}`).length > 0) {
                 return;
               }
               this.closeToolbarOverlays(toolbar);
@@ -45146,14 +44894,14 @@ and ensure you are accounting for this risk.
           }
         },
         closeToolbarOverlays: function(container2) {
-          container2.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
-          container2.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
+          container2.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+          container2.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
             const submenu = $3(this).data("submenu");
             if (submenu) {
-              submenu.removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+              submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
             }
           });
-          container2.find(`.${CONSTANTS2.CSS_CLASSES.TOOLTIP}.${CONSTANTS2.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+          container2.find(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
         },
         // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
         normalizeContent: function(content) {
@@ -45182,17 +44930,17 @@ and ensure you are accounting for this risk.
           button.on("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            $3(`.${CONSTANTS2.CSS_CLASSES.TOOLTIP}.${CONSTANTS2.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
-            const toolbar = button.closest(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
-            toolbar.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
-            dropdownMenu.toggleClass(CONSTANTS2.CSS_CLASSES.SHOW);
+            $3(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+            const toolbar = button.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
+            toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+            dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
           });
         },
         // Create generic dropdown for grouped objects
         createGenericDropdown: function(item, dropdownConfig, editor, config) {
-          const dropdown = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN}"></div>`);
+          const dropdown = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
           const button = $3(`<button type="button" data-action="${item.title}" class="${item.icon}"></button>`);
-          const dropdownMenu = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
+          const dropdownMenu = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
           this.addTooltip(button, item.title);
           item.items.forEach((action) => {
             if (typeof action === "string") {
@@ -45225,7 +44973,7 @@ and ensure you are accounting for this risk.
           this.addTooltip(button, itemConfig.title);
           button.on("click", (e) => {
             e.preventDefault();
-            if (button.hasClass(CONSTANTS2.CSS_CLASSES.DISABLED)) {
+            if (button.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
               return;
             }
             const capability = this.getTool(itemConfig.action);
@@ -45237,7 +44985,7 @@ and ensure you are accounting for this risk.
                 host: this,
                 context: {
                   $: $3,
-                  constants: CONSTANTS2,
+                  constants: CONSTANTS,
                   normalizeContent: (html) => this.normalizeContent(html),
                   autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
                   dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change)
@@ -45245,19 +44993,19 @@ and ensure you are accounting for this risk.
               });
             }
             setTimeout(() => {
-              self.updateToolbarStates(button.closest(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`), editor);
-            }, CONSTANTS2.TOOLBAR_UPDATE_DELAY);
+              self.updateToolbarStates(button.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
+            }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
           });
           return button;
         },
         // Create a toolbar dropdown - used for table and style
         createToolbarDropdown: function(itemConfig, editor, tool) {
-          const dropdown = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN}"></div>`);
+          const dropdown = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
           const button = $3(`<button type="button" data-action="${itemConfig.action}"></button>`);
-          const dropdownMenu = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
+          const dropdownMenu = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
           const capability = this.getTool(itemConfig.action);
           if (itemConfig.type === "dropdown") {
-            dropdownMenu.addClass(CONSTANTS2.CSS_CLASSES.TABLE_DROPDOWN);
+            dropdownMenu.addClass(CONSTANTS.CSS_CLASSES.TABLE_DROPDOWN);
           }
           this.addTooltip(button, itemConfig.title);
           capability && capability.renderDropdownOptions({
@@ -45269,7 +45017,7 @@ and ensure you are accounting for this risk.
             host: this,
             context: {
               $: $3,
-              constants: CONSTANTS2,
+              constants: CONSTANTS,
               parseTooltipText: (text) => this.parseTooltipText(text),
               addTooltip: (btn, text) => this.addTooltip(btn, text),
               updateToolbarStates: (toolbar, editorInstance) => this.updateToolbarStates(toolbar, editorInstance)
@@ -45278,17 +45026,17 @@ and ensure you are accounting for this risk.
           button.on("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            $3(`.${CONSTANTS2.CSS_CLASSES.TOOLTIP}.${CONSTANTS2.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
-            const toolbar = dropdown.closest(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
-            toolbar.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+            $3(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+            const toolbar = dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
+            toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
             itemConfig.options.forEach((option) => {
               let optionBtn = dropdownMenu.find(`button[data-option-action="${option.action}"]`);
               optionBtn.toggleClass(
-                CONSTANTS2.CSS_CLASSES.DISABLED,
+                CONSTANTS.CSS_CLASSES.DISABLED,
                 tool.isOptionDisabled({ optionAction: option.action, editor })
               );
             });
-            dropdownMenu.toggleClass(CONSTANTS2.CSS_CLASSES.SHOW);
+            dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
           });
           dropdown.append(button, dropdownMenu);
           return dropdown;
@@ -45304,20 +45052,20 @@ and ensure you are accounting for this risk.
           toolbar.find("button[data-action]").each(function() {
             const btn = $3(this);
             const action = btn.attr("data-action");
-            btn.removeClass(`${CONSTANTS2.CSS_CLASSES.ACTIVE} ${CONSTANTS2.CSS_CLASSES.DISABLED}`);
+            btn.removeClass(`${CONSTANTS.CSS_CLASSES.ACTIVE} ${CONSTANTS.CSS_CLASSES.DISABLED}`);
             self.updateToolbarButtonState(btn, action, editor);
           });
         },
         // Update individual button state based on action
         updateToolbarButtonState: function(button, action, editor) {
           const capability = this.getTool(action);
-          this.applyCapabilityButtonState(button, capability, editor, CONSTANTS2);
+          this.applyCapabilityButtonState(button, capability, editor, CONSTANTS);
         },
         // Update dropdown menu button states
         updateToolbarDropdownButtons: function(toolbar, editor) {
           toolbar.find(".dropdown-menu button").each((function() {
             const btn = $3(this);
-            this.applyDropdownButtonState(btn, editor, CONSTANTS2, (action) => {
+            this.applyDropdownButtonState(btn, editor, CONSTANTS, (action) => {
               if (!action) {
                 return null;
               }
@@ -45370,7 +45118,7 @@ and ensure you are accounting for this risk.
         addTooltip: function(button, tooltipText) {
           const self = this;
           const parts = this.parseTooltipText(tooltipText);
-          const tooltip = $3(`<div class="${CONSTANTS2.CSS_CLASSES.TOOLTIP}"></div>`);
+          const tooltip = $3(`<div class="${CONSTANTS.CSS_CLASSES.TOOLTIP}"></div>`);
           const tooltipTitle = $3('<div class="tooltip-title"></div>').text(parts.title);
           tooltip.append(tooltipTitle);
           if (parts.shortcut) {
@@ -45413,19 +45161,19 @@ and ensure you are accounting for this risk.
           const buttonOffset = button.offset();
           const buttonWidth = button.outerWidth();
           const buttonHeight = button.outerHeight();
-          tooltip.addClass(CONSTANTS2.CSS_CLASSES.SHOW);
+          tooltip.addClass(CONSTANTS.CSS_CLASSES.SHOW);
           const tooltipWidth = tooltip.outerWidth();
           tooltip.outerHeight();
           tooltip.css({
             position: "absolute",
             top: buttonOffset.top + buttonHeight + 8,
             left: buttonOffset.left + buttonWidth / 2 - tooltipWidth / 2,
-            zIndex: CONSTANTS2.Z_INDEX.TOOLTIP
+            zIndex: CONSTANTS.Z_INDEX.TOOLTIP
           });
         },
         // Hide tooltip
         hideTooltip: function(tooltip) {
-          tooltip.removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+          tooltip.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
         },
         // Add keyboard shortcuts
         addKeyboardShortcuts: function(wrapper, editor) {

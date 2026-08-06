@@ -100,3 +100,17 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorConfig:
   default_element_rules:
     mark: true
     s: true
+    th:
+      attributes:
+        'colspan': true
+        'rowspan': true
+        'colwidth': true
+    td:
+      attributes:
+        'colspan': true
+        'rowspan': true
+        'colwidth': true
+    img:
+      attributes:
+        'data-id': true
+

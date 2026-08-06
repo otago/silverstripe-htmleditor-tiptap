@@ -19,12 +19,15 @@ import ImageResize from 'tiptap-extension-resize-image';
 import screenfull from 'screenfull';
 import InternalAnchor from './InternalAnchor';
 import { Indent } from './indent';
-import { ImagePlus } from 'tiptap-image-plus';
+//import { ImagePlus } from 'tiptap-image-plus';
 
 import {
   initializeLinkBubbleMenu,
   cleanupLinkBubbleMenu,
-  linkbubbletool
+  initializeImageBubbleMenu,
+  cleanupImageBubbleMenu,
+  linkbubbletool,
+  imagebubbletool
 } from './tools/linkbubble'
 
 // Import tools to register in the toolbar
@@ -111,6 +114,44 @@ const TOOLS = [
   listoutdent
 ];
 
+const imageIdAttribute = {
+  default: null,
+  parseHTML: (element) => {
+    const raw = element.getAttribute('data-id') || element.getAttribute('dataid');
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = parseInt(raw, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  },
+  renderHTML: (attributes) => {
+    if (attributes['data-id'] === null || attributes['data-id'] === undefined || attributes['data-id'] === '') {
+      return {};
+    }
+
+    return { 'data-id': String(attributes['data-id']) };
+  },
+};
+
+const TipTapImage = Image.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() || {}),
+      'data-id': imageIdAttribute,
+    };
+  },
+});
+
+const TipTapImageResize = ImageResize.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() || {}),
+      'data-id': imageIdAttribute,
+    };
+  },
+});
+
 
 (function ($) {
   // Configuration constants
@@ -196,29 +237,19 @@ const TOOLS = [
                 openOnClick: false,
               },
             }),
-            ImageResize,
+            TipTapImageResize,
             //ImagePlus,
             Youtube,
             // Additional extensions not included in StarterKit
             //Underline,
-            Image,
+            TipTapImage,
             Highlight,
             InternalAnchor,
-            // Link.configure({
-            //   openOnClick: false,
-            //   HTMLAttributes: {
-            //     // Change rel to different value
-            //     // Allow search engines to follow links(remove nofollow)
-            //     rel: null,
-            //     // Remove target entirely so links open in current tab
-            //     target: null,
-            //   },
-            // }),
             linkbubbletool(wrapper),
+            imagebubbletool(wrapper),
             TextAlign.configure({
               types: ['heading', 'paragraph'],
-              alignments: ['left', 'center', 'right', 'justify'],
-              defaultAlignment: 'left'
+              alignments: ['left', 'center', 'right', 'justify']
             }),
             Indent,
             Subscript,
@@ -317,10 +348,12 @@ const TOOLS = [
                 });
               }
 
-              initializeLinkBubbleMenu(wrapper, editor, this.getTool('ss-link-site'));
+              initializeLinkBubbleMenu(wrapper, editor, this.getTool('ss-link-site'), this.getTool('ss-link-media'));
+              initializeImageBubbleMenu(wrapper, editor, this.getTool('ss-link-media'));
             },
             onDestroy: () => {
               cleanupLinkBubbleMenu(wrapper);
+              cleanupImageBubbleMenu(wrapper);
 
               const guard = wrapper.data('tiptap-elemental-guard');
               if (guard && guard.proseMirrorElement) {

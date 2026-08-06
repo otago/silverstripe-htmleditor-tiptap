@@ -1,5 +1,5 @@
 /**
- * SilverStripe Media Extension for TipTap
+ * SilverStripe Media Extension for TipTap 
  * 
  * This extension provides inserting media (images and files) using the native SilverStripe media modal
  */
@@ -22,6 +22,112 @@ function resolveImageNodeType(editor) {
         }
     }
     return null;
+}
+
+function getAlignmentStyles(alignment) {
+    const value = (alignment || '').trim();
+
+    switch (value) {
+        case 'left':
+            return {
+                containerStyle: 'margin: 0 auto 0 0;',
+                wrapperStyle: 'display: flex; margin: 0;'
+            };
+        case 'center':
+            return {
+                containerStyle: 'margin: 0 auto;',
+                wrapperStyle: 'display: flex; margin: 0;'
+            };
+        case 'right':
+            return {
+                containerStyle: 'margin: 0 0 0 auto;',
+                wrapperStyle: 'display: flex; margin: 0;'
+            };
+        case 'leftAlone':
+            return {
+                containerStyle: 'display: inline-block; float: left; padding-right: 8px;',
+                wrapperStyle: 'display: inline-block; float: left; padding-right: 8px;'
+            };
+        case 'rightAlone':
+            return {
+                containerStyle: 'display: inline-block; float: right; padding-left: 8px;',
+                wrapperStyle: 'display: inline-block; float: right; padding-left: 8px;'
+            };
+        default:
+            return null;
+    }
+}
+
+function inferAlignmentFromResizeStyles(containerStyle, wrapperStyle) {
+    const container = (containerStyle || '').toLowerCase();
+    const wrapper = (wrapperStyle || '').toLowerCase();
+
+    if (container.includes('margin: 0 auto;')) {
+        return 'center';
+    }
+    if (container.includes('margin: 0 auto 0 0;')) {
+        return 'left';
+    }
+    if (container.includes('margin: 0 0 0 auto;')) {
+        return 'right';
+    }
+    if (container.includes('float: left') || wrapper.includes('float: left')) {
+        return 'leftAlone';
+    }
+    if (container.includes('float: right') || wrapper.includes('float: right')) {
+        return 'rightAlone';
+    }
+
+    return '';
+}
+
+function resolveMediaId(data, file) {
+    const rawId = data && data.ID !== undefined && data.ID !== null
+        ? data.ID
+        : file && file.id !== undefined && file.id !== null
+            ? file.id
+            : file && file.ID !== undefined && file.ID !== null
+                ? file.ID
+                : null;
+
+    if (rawId === null || rawId === '') {
+        return null;
+    }
+
+    const id = parseInt(rawId, 10);
+    return Number.isNaN(id) ? null : id;
+}
+
+function resolveMediaUrl(data, file) {
+    const dataUrl = data && (data.url || data.URL || data.FileURL);
+    if (dataUrl) {
+        return dataUrl;
+    }
+
+    const fileUrl = file && (file.url || file.URL || file.FileURL);
+    if (fileUrl) {
+        return fileUrl;
+    }
+
+    if (data.FileFilename) {
+        return `/assets/${data.FileFilename}`;
+    }
+
+    // these old hash urls were removed in older silverstripe versions
+    // const dataHash = data && data.FileHash;
+    // const dataFilename = data && data.FileFilename;
+    // if (dataHash && dataFilename) {
+    //     return `/assets/${String(dataHash).substring(0, 10)}/${dataFilename}`;
+    // }
+
+    // const fileHash = file && file.FileHash;
+    // const fileFilename = file && file.FileFilename;
+    // if (fileHash && fileFilename) {
+    //     return `/assets/${String(fileHash).substring(0, 10)}/${fileFilename}`;
+    // }
+
+    const mediaId = resolveMediaId(data, file);
+    return mediaId ? `/assets/files/${mediaId}` : '';
 }
 
 window.TipTapExtensions['ss-link-media'] = {
@@ -69,16 +175,24 @@ window.TipTapExtensions['ss-link-media'] = {
         this.onClick(editor, this.config || {}, host);
     },
 
+    openImageEditor: function (editor) {
+        //console.log('openImageEditor')
+        this.openFileLinkDialog(editor, '', { replaceSelection: true });
+    },
+
     /**
      * Open media dialog using SilverStripe's media selector
      * @param {Editor} editor - TipTap editor instance
      * @param {string} selectedText - Currently selected text
      */
-    openFileLinkDialog: function (editor, selectedText) {
+    openFileLinkDialog: function (editor, selectedText, options = {}) {
+        //console.log('openFileLinkDialog called with selectedText:', selectedText, 'and options:', options);
         const self = this;
+        const replaceSelection = Boolean(options.replaceSelection);
 
         // Get current link if cursor is on one
         const currentLink = editor.getAttributes('link');
+       // console.log('currentLink attributes:', currentLink);
 
         // Create modal container
         const modalId = 'tiptap-insert-media__dialog-wrapper';
@@ -122,7 +236,7 @@ window.TipTapExtensions['ss-link-media'] = {
                 let result = false;
                 switch (category) {
                     case 'image':
-                        result = self.insertImage(editor, data, file, selectedText);
+                        result = self.insertImage(editor, data, file, selectedText, { replaceSelection });
                         break;
                     default:
                         result = self.insertFile(editor, data, file, selectedText);
@@ -154,7 +268,7 @@ window.TipTapExtensions['ss-link-media'] = {
         const selectionContent = editor.state.doc.textBetween(from, to, '');
         const node = editor.view.domAtPos(from).node;
         const tagName = node.nodeType === Node.ELEMENT_NODE ? node.tagName : (node.parentElement ? node.parentElement.tagName : '');
-        
+
         // Require link text if there's no selection or if an image is selected
         const requireLinkText = tagName !== 'A' && (tagName === 'IMG' || selectionContent.trim() === '');
         const fileSelected = mediaAttributes.hasOwnProperty('ID') && mediaAttributes.ID !== null;
@@ -189,26 +303,35 @@ window.TipTapExtensions['ss-link-media'] = {
         const { from, to } = editor.state.selection;
         const node = editor.view.domAtPos(from).node;
         const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
-        
-        if (!element) {
+        const imageElement = element && element.tagName === 'IMG'
+            ? element
+            : element && typeof element.querySelector === 'function'
+                ? element.querySelector('img')
+                : null;
+
+        if (!element && !imageElement) {
             return {};
         }
 
         // Handle image elements
-        if (element.tagName === 'IMG') {
-            const captionContainer = element.closest('.captionImage');
+        if (imageElement) {
+            const captionContainer = imageElement.closest('.captionImage');
             const caption = captionContainer ? captionContainer.querySelector('.caption') : null;
-            
+            const styleAlignment = inferAlignmentFromResizeStyles(
+                imageElement.getAttribute('containerstyle'),
+                imageElement.getAttribute('wrapperstyle')
+            );
+
             return {
-                url: element.getAttribute('src'),
-                AltText: element.getAttribute('alt'),
-                Width: element.getAttribute('width') ? parseInt(element.getAttribute('width'), 10) : null,
-                Height: element.getAttribute('height') ? parseInt(element.getAttribute('height'), 10) : null,
-                Loading: element.getAttribute('data-loading'),
-                TitleTooltip: element.getAttribute('title'),
-                Alignment: this.findPosition(element.getAttribute('class')),
+                url: imageElement.getAttribute('src'),
+                AltText: imageElement.getAttribute('alt'),
+                Width: imageElement.getAttribute('width') ? parseInt(imageElement.getAttribute('width'), 10) : null,
+                Height: imageElement.getAttribute('height') ? parseInt(imageElement.getAttribute('height'), 10) : null,
+                Loading: imageElement.getAttribute('data-loading'),
+                TitleTooltip: imageElement.getAttribute('title'),
+                Alignment: styleAlignment || this.findPosition(imageElement.getAttribute('class')),
                 Caption: caption ? caption.textContent : '',
-                ID: element.getAttribute('data-id') ? parseInt(element.getAttribute('data-id'), 10) : null,
+                ID: imageElement.getAttribute('data-id') ? parseInt(imageElement.getAttribute('data-id'), 10) : null,
             };
         }
 
@@ -297,6 +420,14 @@ window.TipTapExtensions['ss-link-media'] = {
             if (attrs.class) htmlAttrs.push(`class="${attrs.class}"`);
             if (attrs.id) htmlAttrs.push(`data-id="${attrs.id}"`);
             if (attrs.loading) htmlAttrs.push(`data-loading="${attrs.loading}"`);
+
+            const alignment = this.findPosition(attrs.class || '');
+            const alignmentStyles = getAlignmentStyles(alignment);
+            if (alignmentStyles) {
+                htmlAttrs.push(`containerstyle="${alignmentStyles.containerStyle}"`);
+                htmlAttrs.push(`wrapperstyle="${alignmentStyles.wrapperStyle}"`);
+            }
+
             htmlAttrs.push('data-shortcode="image"');
 
             return `<img ${htmlAttrs.join(' ')} />`;
@@ -324,7 +455,7 @@ window.TipTapExtensions['ss-link-media'] = {
     buildFileAttributes: function (data) {
         // Try different approaches to build the file link
         let href = '';
-        
+
         // If we have ShortcodeSerialiser available, try to use it
         if (window.ShortcodeSerialiser && data.ID) {
             try {
@@ -349,17 +480,17 @@ window.TipTapExtensions['ss-link-media'] = {
                     // Manual shortcode construction
                     href = `[file_link,id=${data.ID}]`;
                 }
-                
+
                 // Add anchor if provided
                 const anchor = data.Anchor && data.Anchor.length ? `#${data.Anchor}` : '';
                 href = `${href}${anchor}`;
-                
+
             } catch (e) {
                 console.warn('Error creating shortcode:', e);
                 // Fall through to direct URL approach
             }
         }
-        
+
         // Fallback to direct URL if shortcode creation failed
         if (!href) {
             href = data.url || data.URL || data.FileURL;
@@ -379,7 +510,7 @@ window.TipTapExtensions['ss-link-media'] = {
             target: data.TargetBlank ? '_blank' : '',
             title: data.Description || data.Title || data.FileFilename || '',
         };
-        
+
         return attributes;
     },
 
@@ -459,27 +590,33 @@ window.TipTapExtensions['ss-link-media'] = {
      * @param {string} selectedText - Selected text
      * @returns {boolean} Success
      */
-    insertImage: function (editor, data, file, selectedText) {
+    insertImage: function (editor, data, file, selectedText, options = {}) {
         try {
             // console.log('=== insertImage Debug ===');
             // console.log('data:', data);
             // console.log('file:', file);
             // console.log('selectedText:', selectedText);
-            
+
+            const mediaId = resolveMediaId(data, file);
+            const fileTitle = (data && (data.FileFilename || data.TitleTooltip || data.AltText))
+                || (file && (file.title || file.Title || file.FileFilename))
+                || '';
+            const imageUrl = resolveMediaUrl(data, file);
+
             // Build image attributes
             const attrs = {
-                src: data.url,
-                alt: data.AltText || '',
+                src: imageUrl,
+                alt: (data && data.AltText) || '',
                 width: data.Width || null,
                 height: data.Height || null,
-                title: data.TitleTooltip || '',
+                title: (data && data.TitleTooltip) || '',
                 class: `ss-htmleditorfield-file image ${data.Alignment || ''}`.trim(),
-                'data-id': data.ID,
+                'data-id': mediaId,
                 'data-shortcode': 'image',
                 'data-loading': data.Loading || null,
             };
 
-           // console.log('attrs before cleanup:', attrs);
+            // console.log('attrs before cleanup:', attrs);
 
             // Remove null/undefined attributes
             Object.keys(attrs).forEach(key => {
@@ -492,11 +629,14 @@ window.TipTapExtensions['ss-link-media'] = {
 
             // Use TipTap's proper node creation for images
             const imageAttrs = {
-                src: data.url || file.url || '',
-                alt: data.AltText || file.title || '',
-                title: data.TitleTooltip || file.title || '',
+                src: imageUrl,
+                alt: (data && data.AltText) || fileTitle || '',
+                title: (data && data.TitleTooltip) || fileTitle || '',
+                'data-id': mediaId,
+                dataId: mediaId,
+                id: mediaId,
             };
-            
+
             // Add dimensions if provided
             if (data.Width) imageAttrs.width = data.Width;
             if (data.Height) imageAttrs.height = data.Height;
@@ -506,28 +646,80 @@ window.TipTapExtensions['ss-link-media'] = {
                 return false;
             }
 
-           // console.log('imageAttrs for TipTap:', imageAttrs);
+            const alignmentStyles = getAlignmentStyles(data.Alignment);
+            if (alignmentStyles && imageNodeType === 'imageResize') {
+                imageAttrs.containerStyle = alignmentStyles.containerStyle;
+                imageAttrs.wrapperStyle = alignmentStyles.wrapperStyle;
+            }
+
+            // console.log('imageAttrs for TipTap:', imageAttrs);
 
             // Insert the image using TipTap's image command
             if (data.Caption) {
-              //  console.log('Inserting captioned image with caption:', data.Caption);
+                //  console.log('Inserting captioned image with caption:', data.Caption);
                 // For captioned images, we'll insert HTML since it's complex
                 const captionHtml = `
                     <div class="captionImage ${data.Alignment || ''}" style="width: ${data.Width || 'auto'}px;">
-                        <img src="${data.url || file.url || ''}" alt="${data.AltText || file.title || ''}" ${data.Width ? `width="${data.Width}"` : ''} ${data.Height ? `height="${data.Height}"` : ''} title="${data.TitleTooltip || file.title || ''}" class="ss-htmleditorfield-file image ${data.Alignment || ''}" data-id="${data.ID || file.id}" data-shortcode="image" ${data.Loading ? `data-loading="${data.Loading}"` : ''} />
+                        <img src="${imageUrl}" alt="${(data && data.AltText) || fileTitle || ''}" ${data.Width ? `width="${data.Width}"` : ''} ${data.Height ? `height="${data.Height}"` : ''} title="${(data && data.TitleTooltip) || fileTitle || ''}" class="ss-htmleditorfield-file image ${data.Alignment || ''}" ${mediaId ? `data-id="${mediaId}"` : ''} data-shortcode="image" ${data.Loading ? `data-loading="${data.Loading}"` : ''} />
                         <p class="caption ${data.Alignment || ''}">${data.Caption}</p>
                     </div>
                 `;
-              //  console.log('captionHtml:', captionHtml);
-                editor.chain().focus().insertContent(captionHtml).run();
+
+                //console.log('captionHtml:', captionHtml);
+                if (options.replaceSelection) {
+                    editor.chain().focus().deleteSelection().insertContent(captionHtml).run();
+                } else {
+                    editor.chain().focus().insertContent(captionHtml).run();
+                }
             } else {
-             //   console.log('Inserting simple image');
+                //   console.log('Inserting simple image');
                 // For simple images, insert the best available image node type.
                 const imageContent = { type: imageNodeType, attrs: imageAttrs };
                 if (!editor.can().insertContent(imageContent)) {
                     return false;
                 }
-                editor.chain().focus().insertContent(imageContent).run();
+                if (options.replaceSelection) {
+                    editor.chain().focus().deleteSelection().insertContent(imageContent).run();
+                } else {
+                    editor.chain().focus().insertContent(imageContent).run();
+                }
+            }
+
+
+            // Ensure the rendered DOM node keeps a stable data-id attribute.
+            if (mediaId) {
+                //console.log('mediaId:', mediaId);
+                const { from } = editor.state.selection;
+                let imageElement = null;
+                const nodeDom = editor.view.nodeDOM(from);
+
+                if (nodeDom && nodeDom.nodeType === Node.ELEMENT_NODE) {
+                    if (nodeDom.tagName === 'IMG') {
+                        imageElement = nodeDom;
+                    } else if (typeof nodeDom.querySelector === 'function') {
+                        imageElement = nodeDom.querySelector('img');
+                    }
+                }
+
+                if (!imageElement) {
+                    const lookupPos = from > 0 ? from - 1 : from;
+                    const domAtPos = editor.view.domAtPos(lookupPos);
+                    const baseNode = domAtPos && domAtPos.node ? domAtPos.node : null;
+                    const parent = baseNode && baseNode.nodeType === Node.ELEMENT_NODE ? baseNode : baseNode && baseNode.parentElement;
+
+                    if (parent) {
+                        if (parent.tagName === 'IMG') {
+                            imageElement = parent;
+                        } else if (typeof parent.querySelector === 'function') {
+                            imageElement = parent.querySelector('img');
+                        }
+                    }
+                }
+
+                // if (imageElement) {
+                //     console.log('Setting data-id on image element:', imageElement, 'with mediaId:', mediaId);
+                //     imageElement.setAttribute('data-id', String(mediaId));
+                // }
             }
 
             return true;
@@ -551,7 +743,7 @@ window.TipTapExtensions['ss-link-media'] = {
             // console.log('data:', data);
             // console.log('file:', file);
             // console.log('selectedText:', selectedText);
-            
+
             // Build shortcode for file link
             let href = '';
             if (window.ShortcodeSerialiser && data.ID) {
@@ -561,7 +753,7 @@ window.TipTapExtensions['ss-link-media'] = {
                         properties: { id: data.ID },
                     }, true);
                     href = shortcode;
-                 //   console.log('Generated shortcode:', shortcode);
+                    //   console.log('Generated shortcode:', shortcode);
                 } catch (e) {
                     console.warn('Error creating shortcode:', e);
                     href = data.url || data.URL || `/assets/files/${data.ID}`;
@@ -570,7 +762,7 @@ window.TipTapExtensions['ss-link-media'] = {
                 href = data.url || data.URL || (data.ID ? `/assets/files/${data.ID}` : '');
             }
 
-           // console.log('Final href:', href);
+            // console.log('Final href:', href);
 
             if (!href) {
                 console.error('No valid href for file link');
@@ -583,7 +775,7 @@ window.TipTapExtensions['ss-link-media'] = {
                 title: data.Description || '',
             };
 
-         //   console.log('linkAttributes:', linkAttributes);
+            //   console.log('linkAttributes:', linkAttributes);
 
             // Determine link text
             const { from, to } = editor.state.selection;
@@ -595,10 +787,10 @@ window.TipTapExtensions['ss-link-media'] = {
 
             // If there's selected text, replace it with the link
             if (currentSelection) {
-             //   console.log('Setting link on selected text');
+                //   console.log('Setting link on selected text');
                 editor.chain().focus().setLink(linkAttributes).run();
             } else {
-             //   console.log('Inserting new link with text');
+                //   console.log('Inserting new link with text');
                 // Insert new link with the provided text using TipTap's proper link command
                 editor.chain()
                     .focus()
@@ -652,8 +844,6 @@ window.TipTapExtensions['ss-link-media'] = {
         if (!nodeType) {
             return true;
         }
-        console.log('nodeType', nodeType);
-
         return !editor.can().insertContent({ type: nodeType, attrs: { src: '#' } });
     },
 
