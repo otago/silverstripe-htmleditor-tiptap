@@ -31288,7 +31288,7 @@ ${prefix}
     })
   });
   var index_default = Youtube;
-  const CONSTANTS$1 = {
+  const CONSTANTS = {
     MOBILE_BREAKPOINT: 768,
     ICON_SIZE: "24px",
     CONTROLLER_HEIGHT: "25px",
@@ -31314,15 +31314,15 @@ ${prefix}
       RIGHT: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Ik0xNDQtNzQ0di03Mmg2NzJ2NzJIMTQ0Wm0xOTIgMTUwdi03Mmg0ODB2NzJIMzM2Wk0xNDQtNDQ0di03Mmg2NzJ2NzJIMTQ0Wm0xOTIgMTUwdi03Mmg0ODB2NzJIMzM2Wk0xNDQtMTQ0di03Mmg2NzJ2NzJIMTQ0WiIvPjwvc3ZnPg=="
     }
   };
-  const utils$1 = {
+  const utils = {
     isMobile() {
-      return document.documentElement.clientWidth < CONSTANTS$1.MOBILE_BREAKPOINT;
+      return document.documentElement.clientWidth < CONSTANTS.MOBILE_BREAKPOINT;
     },
     getDotPosition() {
-      return utils$1.isMobile() ? CONSTANTS$1.DOT_POSITION.MOBILE : CONSTANTS$1.DOT_POSITION.DESKTOP;
+      return utils.isMobile() ? CONSTANTS.DOT_POSITION.MOBILE : CONSTANTS.DOT_POSITION.DESKTOP;
     },
     getDotSize() {
-      return utils$1.isMobile() ? CONSTANTS$1.DOT_SIZE.MOBILE : CONSTANTS$1.DOT_SIZE.DESKTOP;
+      return utils.isMobile() ? CONSTANTS.DOT_SIZE.MOBILE : CONSTANTS.DOT_SIZE.DESKTOP;
     },
     clearContainerBorder(container2) {
       const containerStyle = container2.getAttribute("style");
@@ -31333,7 +31333,7 @@ ${prefix}
       container2.querySelectorAll("[data-resize-image-ui]").forEach((element) => element.remove());
     }
   };
-  let StyleManager$1 = class StyleManager {
+  class StyleManager {
     static getContainerStyle(inline2, width) {
       const baseStyle = `width: ${width || "100%"}; height: auto; cursor: pointer;`;
       const inlineStyle = inline2 ? "display: inline-block;" : "";
@@ -31349,11 +31349,11 @@ ${prefix}
       top: 0%; 
       left: 50%; 
       width: ${width}; 
-      height: ${CONSTANTS$1.CONTROLLER_HEIGHT}; 
+      height: ${CONSTANTS.CONTROLLER_HEIGHT}; 
       z-index: 999; 
-      background-color: ${CONSTANTS$1.COLORS.BACKGROUND}; 
+      background-color: ${CONSTANTS.COLORS.BACKGROUND}; 
       border-radius: 3px; 
-      border: 1px solid ${CONSTANTS$1.COLORS.BORDER}; 
+      border: 1px solid ${CONSTANTS.COLORS.BORDER}; 
       cursor: pointer; 
       transform: translate(-50%, -50%); 
       display: flex; 
@@ -31363,8 +31363,8 @@ ${prefix}
     `.replace(/\s+/g, " ").trim();
     }
     static getDotStyle(index) {
-      const dotPosition = utils$1.getDotPosition();
-      const dotSize = utils$1.getDotSize();
+      const dotPosition = utils.getDotPosition();
+      const dotSize = utils.getDotSize();
       const positions = [
         `top: ${dotPosition}; left: ${dotPosition}; cursor: nwse-resize;`,
         `top: ${dotPosition}; right: ${dotPosition}; cursor: nesw-resize;`,
@@ -31375,12 +31375,12 @@ ${prefix}
       position: absolute; 
       width: ${dotSize}px; 
       height: ${dotSize}px; 
-      border: 1.5px solid ${CONSTANTS$1.COLORS.BORDER}; 
+      border: 1.5px solid ${CONSTANTS.COLORS.BORDER}; 
       border-radius: 50%; 
       ${positions[index]}
     `.replace(/\s+/g, " ").trim();
     }
-  };
+  }
   const DIMENSION_TOKEN = /^-?\d+(?:\.\d+)?(?:px|em|rem|%|vw|vh)$|^auto$|^0$/i;
   const isDimensionValue = (value) => {
     return value.trim().split(/\s+/).every((token) => DIMENSION_TOKEN.test(token));
@@ -31517,7 +31517,7 @@ ${prefix}
       detachIfEmpty();
     };
   }
-  let PositionController$1 = class PositionController {
+  class PositionController {
     constructor(elements, inline2, dispatchNodeView) {
       this.elements = elements;
       this.inline = inline2;
@@ -31526,7 +31526,7 @@ ${prefix}
     createControllerIcon(src) {
       const controller = document.createElement("img");
       controller.setAttribute("src", src);
-      controller.setAttribute("style", `width: ${CONSTANTS$1.ICON_SIZE}; height: ${CONSTANTS$1.ICON_SIZE}; cursor: pointer;`);
+      controller.setAttribute("style", `width: ${CONSTANTS.ICON_SIZE}; height: ${CONSTANTS.ICON_SIZE}; cursor: pointer;`);
       controller.addEventListener("mouseover", (e) => {
         e.target.style.opacity = "0.6";
       });
@@ -31569,23 +31569,23 @@ ${prefix}
     createPositionControls() {
       const controller = document.createElement("div");
       controller.dataset.resizeImageUi = "position-controller";
-      controller.setAttribute("style", StyleManager$1.getPositionControllerStyle(this.inline));
-      const leftController = this.createControllerIcon(CONSTANTS$1.ICONS.LEFT);
+      controller.setAttribute("style", StyleManager.getPositionControllerStyle(this.inline));
+      const leftController = this.createControllerIcon(CONSTANTS.ICONS.LEFT);
       leftController.addEventListener("click", () => this.handleLeftClick());
       controller.appendChild(leftController);
       if (!this.inline) {
-        const centerController = this.createControllerIcon(CONSTANTS$1.ICONS.CENTER);
+        const centerController = this.createControllerIcon(CONSTANTS.ICONS.CENTER);
         centerController.addEventListener("click", () => this.handleCenterClick());
         controller.appendChild(centerController);
       }
-      const rightController = this.createControllerIcon(CONSTANTS$1.ICONS.RIGHT);
+      const rightController = this.createControllerIcon(CONSTANTS.ICONS.RIGHT);
       rightController.addEventListener("click", () => this.handleRightClick());
       controller.appendChild(rightController);
       this.elements.container.appendChild(controller);
       return this;
     }
-  };
-  let ResizeController$1 = class ResizeController {
+  }
+  class ResizeController {
     constructor(elements, dispatchNodeView, resizeLimits = {}) {
       this.state = {
         isResizing: false,
@@ -31654,7 +31654,7 @@ ${prefix}
     createResizeHandle(index) {
       const dot = document.createElement("div");
       dot.dataset.resizeImageUi = "resize-handle";
-      dot.setAttribute("style", StyleManager$1.getDotStyle(index));
+      dot.setAttribute("style", StyleManager.getDotStyle(index));
       dot.addEventListener("mousedown", (e) => {
         e.preventDefault();
         this.state.isResizing = true;
@@ -31687,12 +31687,12 @@ ${prefix}
       }, { passive: false });
       return dot;
     }
-  };
-  let ImageNodeView$1 = class ImageNodeView {
+  }
+  class ImageNodeView {
     constructor(context, inline2, resizeLimits = {}) {
       this.unsubscribeDocumentClick = null;
       this.handleContainerClick = () => {
-        const isMobile = utils$1.isMobile();
+        const isMobile = utils.isMobile();
         const editorDom = this.context.view.dom;
         isMobile && (editorDom === null || editorDom === void 0 ? void 0 : editorDom.blur());
         this.removeResizeElements();
@@ -31700,7 +31700,7 @@ ${prefix}
         const sanitized = sanitizeStyle(this.context.node.attrs.containerStyle);
         this.elements.container.setAttribute("style", sanitized);
         this.elements.container.style.position = "relative";
-        this.elements.container.style.border = `1px dashed ${CONSTANTS$1.COLORS.BORDER}`;
+        this.elements.container.style.border = `1px dashed ${CONSTANTS.COLORS.BORDER}`;
         this.applyResizeLimits();
         this.createResizeHandler();
       };
@@ -31713,7 +31713,7 @@ ${prefix}
         }
       };
       this.clearContainerBorder = () => {
-        utils$1.clearContainerBorder(this.elements.container);
+        utils.clearContainerBorder(this.elements.container);
       };
       this.dispatchNodeView = () => {
         var _a;
@@ -31731,7 +31731,7 @@ ${prefix}
         }
       };
       this.removeResizeElements = () => {
-        utils$1.removeResizeElements(this.elements.container);
+        utils.removeResizeElements(this.elements.container);
       };
       this.destroy = () => {
         var _a;
@@ -31802,11 +31802,11 @@ ${prefix}
       this.elements.img.setAttribute("width", String(clamped));
     }
     createPositionController() {
-      const positionController = new PositionController$1(this.elements, this.inline, this.dispatchNodeView);
+      const positionController = new PositionController(this.elements, this.inline, this.dispatchNodeView);
       positionController.createPositionControls();
     }
     createResizeHandler() {
-      const resizeHandler = new ResizeController$1(this.elements, this.dispatchNodeView, this.resizeLimits);
+      const resizeHandler = new ResizeController(this.elements, this.dispatchNodeView, this.resizeLimits);
       Array.from({ length: 4 }, (_, index) => {
         const dot = resizeHandler.createResizeHandle(index);
         this.elements.container.appendChild(dot);
@@ -31833,7 +31833,7 @@ ${prefix}
         destroy: this.destroy
       };
     }
-  };
+  }
   const imageResizeConfig = {
     name: "imageResize",
     addOptions() {
@@ -31851,13 +31851,13 @@ ${prefix}
             return sanitizeStyle(containerStyle);
           }
           const width = element.getAttribute("width");
-          return width ? StyleManager$1.getContainerStyle(inline2, `${width}px`) : sanitizeStyle(element.style.cssText);
+          return width ? StyleManager.getContainerStyle(inline2, `${width}px`) : sanitizeStyle(element.style.cssText);
         }
       }, wrapperStyle: {
-        default: StyleManager$1.getWrapperStyle(inline2),
+        default: StyleManager.getWrapperStyle(inline2),
         parseHTML: (element) => {
           const wrapperStyle = element.getAttribute("wrapperstyle");
-          return wrapperStyle ? sanitizeStyle(wrapperStyle) : StyleManager$1.getWrapperStyle(inline2);
+          return wrapperStyle ? sanitizeStyle(wrapperStyle) : StyleManager.getWrapperStyle(inline2);
         }
       } });
     },
@@ -31874,13 +31874,13 @@ ${prefix}
           getPos: typeof getPos === "function" ? getPos : void 0
         };
         const resizeLimits = { minWidth, maxWidth };
-        const nodeView = new ImageNodeView$1(context, inline2, resizeLimits);
+        const nodeView = new ImageNodeView(context, inline2, resizeLimits);
         return nodeView.initialize();
       };
     }
   };
   const ImageResize = index_default$9.extend(imageResizeConfig);
-  class FigureNodeView extends ImageNodeView$1 {
+  class FigureNodeView extends ImageNodeView {
     constructor() {
       super(...arguments);
       this.dispatchNodeView = () => {
@@ -32047,14 +32047,14 @@ ${prefix}
             if (containerStyle)
               return sanitizeStyle(containerStyle);
             const width = img === null || img === void 0 ? void 0 : img.getAttribute("width");
-            return width ? StyleManager$1.getContainerStyle(false, `${width}px`) : sanitizeStyle(img === null || img === void 0 ? void 0 : img.style.cssText);
+            return width ? StyleManager.getContainerStyle(false, `${width}px`) : sanitizeStyle(img === null || img === void 0 ? void 0 : img.style.cssText);
           }
         },
         wrapperStyle: {
-          default: StyleManager$1.getWrapperStyle(false),
+          default: StyleManager.getWrapperStyle(false),
           parseHTML: (element) => {
             const wrapperStyle = element.getAttribute("wrapperstyle");
-            return wrapperStyle ? sanitizeStyle(wrapperStyle) : StyleManager$1.getWrapperStyle(false);
+            return wrapperStyle ? sanitizeStyle(wrapperStyle) : StyleManager.getWrapperStyle(false);
           }
         }
       };
@@ -32249,15 +32249,15 @@ ${prefix}
     change: nativeAPI.fullscreenchange,
     error: nativeAPI.fullscreenerror
   };
-  let screenfull$1 = {
+  let screenfull = {
     // eslint-disable-next-line default-param-last
     request(element = document.documentElement, options) {
       return new Promise((resolve, reject) => {
         const onFullScreenEntered = () => {
-          screenfull$1.off("change", onFullScreenEntered);
+          screenfull.off("change", onFullScreenEntered);
           resolve();
         };
-        screenfull$1.on("change", onFullScreenEntered);
+        screenfull.on("change", onFullScreenEntered);
         const returnPromise = element[nativeAPI.requestFullscreen](options);
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenEntered).catch(reject);
@@ -32266,15 +32266,15 @@ ${prefix}
     },
     exit() {
       return new Promise((resolve, reject) => {
-        if (!screenfull$1.isFullscreen) {
+        if (!screenfull.isFullscreen) {
           resolve();
           return;
         }
         const onFullScreenExit = () => {
-          screenfull$1.off("change", onFullScreenExit);
+          screenfull.off("change", onFullScreenExit);
           resolve();
         };
-        screenfull$1.on("change", onFullScreenExit);
+        screenfull.on("change", onFullScreenExit);
         const returnPromise = document[nativeAPI.exitFullscreen]();
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenExit).catch(reject);
@@ -32282,13 +32282,13 @@ ${prefix}
       });
     },
     toggle(element, options) {
-      return screenfull$1.isFullscreen ? screenfull$1.exit() : screenfull$1.request(element, options);
+      return screenfull.isFullscreen ? screenfull.exit() : screenfull.request(element, options);
     },
     onchange(callback) {
-      screenfull$1.on("change", callback);
+      screenfull.on("change", callback);
     },
     onerror(callback) {
-      screenfull$1.on("error", callback);
+      screenfull.on("error", callback);
     },
     on(event, callback) {
       const eventName = eventNameMap[event];
@@ -32304,7 +32304,7 @@ ${prefix}
     },
     raw: nativeAPI
   };
-  Object.defineProperties(screenfull$1, {
+  Object.defineProperties(screenfull, {
     isFullscreen: {
       get: () => Boolean(document[nativeAPI.fullscreenElement])
     },
@@ -32319,9 +32319,9 @@ ${prefix}
     }
   });
   if (!nativeAPI) {
-    screenfull$1 = { isEnabled: false };
+    screenfull = { isEnabled: false };
   }
-  const screenfull = screenfull$1;
+  const screenfull$1 = screenfull;
   const InternalAnchor = Node3.create({
     name: "internalAnchor",
     group: "inline",
@@ -32908,21 +32908,21 @@ ${prefix}
       };
     },
     run({ button, context }) {
-      if (!screenfull.isEnabled) {
+      if (!screenfull$1.isEnabled) {
         return;
       }
       const wrapper = button.closest(`.${context.constants.CSS_CLASSES.WRAPPER}`)[0];
-      if (screenfull.isFullscreen) {
-        screenfull.exit();
+      if (screenfull$1.isFullscreen) {
+        screenfull$1.exit();
         return;
       }
-      screenfull.request(wrapper);
+      screenfull$1.request(wrapper);
     },
     isActive(editor) {
-      return screenfull.isEnabled ? screenfull.isFullscreen : false;
+      return screenfull$1.isEnabled ? screenfull$1.isFullscreen : false;
     },
     isDisabled(editor) {
-      return !screenfull.isEnabled;
+      return !screenfull$1.isEnabled;
     }
   };
   const heading1 = createCommandTool({
@@ -44573,7 +44573,7 @@ and ensure you are accounting for this risk.
     }
   });
   (function($2) {
-    const CONSTANTS = {
+    const CONSTANTS2 = {
       // Timing constants
       TOOLBAR_UPDATE_DELAY: 10,
       SUBMENU_HIDE_DELAY: 200,
@@ -44631,7 +44631,7 @@ and ensure you are accounting for this risk.
           }
           this.data("tiptap-tools", this.buildToolRegistry(config));
           if (!this.data("tiptap-initialized")) {
-            const wrapper = $3(`<div class="${CONSTANTS.CSS_CLASSES.WRAPPER}"></div>`);
+            const wrapper = $3(`<div class="${CONSTANTS2.CSS_CLASSES.WRAPPER}"></div>`);
             this.after(wrapper);
             this.hide();
             const extensions = [
@@ -44690,7 +44690,7 @@ and ensure you are accounting for this risk.
               }),
               Table.configure({
                 resizable: true,
-                cellMinWidth: CONSTANTS.TABLE_MIN_WIDTH
+                cellMinWidth: CONSTANTS2.TABLE_MIN_WIDTH
               }),
               index_default$3,
               index_default$2,
@@ -44710,7 +44710,7 @@ and ensure you are accounting for this risk.
                 if (config.toolbar !== false) {
                   this.createToolbar(wrapper, editor2, config);
                 }
-                const proseMirrorElement = wrapper.find(`.${CONSTANTS.CSS_CLASSES.PROSEMIRROR}`)[0];
+                const proseMirrorElement = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.PROSEMIRROR}`)[0];
                 if (proseMirrorElement) {
                   const handleElementalToggleKeys = (event) => {
                     if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
@@ -44724,14 +44724,14 @@ and ensure you are accounting for this risk.
                     handleElementalToggleKeys
                   });
                 }
-                if (screenfull.isEnabled) {
+                if (screenfull$1.isEnabled) {
                   const self = this;
-                  screenfull.on("change", () => {
-                    const toolbar = wrapper.find(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
+                  screenfull$1.on("change", () => {
+                    const toolbar = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
                     if (toolbar.length) {
                       self.updateToolbarStates(toolbar, editor2);
                     }
-                    wrapper.toggleClass(CONSTANTS.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
+                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull$1.isFullscreen);
                   });
                 }
                 initializeLinkBubbleMenu(wrapper, editor2, this.getTool("ss-link-site"), this.getTool("ss-link-media"));
@@ -44778,7 +44778,7 @@ and ensure you are accounting for this risk.
                 tooltip.remove();
               }
             });
-            wrapper.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
+            wrapper.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
               const submenu = $3(this).data("submenu");
               if (submenu) {
                 submenu.remove();
@@ -44813,7 +44813,7 @@ and ensure you are accounting for this risk.
         },
         // Helper method to create a configurable toolbar
         createToolbar: function(wrapper, editor, config) {
-          const toolbar = $3(`<div class="${CONSTANTS.CSS_CLASSES.TOOLBAR}"></div>`);
+          const toolbar = $3(`<div class="${CONSTANTS2.CSS_CLASSES.TOOLBAR}"></div>`);
           this.initializeExtensions(editor, config);
           this.createToolbarItems(toolbar, config, editor);
           this.createToolbarEventListeners(wrapper, toolbar, editor);
@@ -44847,12 +44847,12 @@ and ensure you are accounting for this risk.
               };
             }
             if (itemConfig.action === "separator") {
-              const separator = $3(`<div class="${CONSTANTS.CSS_CLASSES.SEPARATOR}"></div>`);
+              const separator = $3(`<div class="${CONSTANTS2.CSS_CLASSES.SEPARATOR}"></div>`);
               toolbar.append(separator);
               return;
             }
             if (itemConfig.action === "newline") {
-              const lineBreak = $3(`<div class="${CONSTANTS.CSS_CLASSES.NEWLINE}"></div>`);
+              const lineBreak = $3(`<div class="${CONSTANTS2.CSS_CLASSES.NEWLINE}"></div>`);
               toolbar.append(lineBreak);
               return;
             }
@@ -44874,7 +44874,7 @@ and ensure you are accounting for this risk.
           });
           if (!wrapper.data("tiptap-outside-handlers")) {
             const handleOutsideInteraction = (event) => {
-              if ($3(event.target).closest(`.${CONSTANTS.CSS_CLASSES.DROPDOWN}`).length > 0) {
+              if ($3(event.target).closest(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN}`).length > 0) {
                 return;
               }
               this.closeToolbarOverlays(toolbar);
@@ -44894,14 +44894,14 @@ and ensure you are accounting for this risk.
           }
         },
         closeToolbarOverlays: function(container2) {
-          container2.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-          container2.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
+          container2.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+          container2.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_GROUP_ITEM}`).each(function() {
             const submenu = $3(this).data("submenu");
             if (submenu) {
-              submenu.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+              submenu.removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
             }
           });
-          container2.find(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+          container2.find(`.${CONSTANTS2.CSS_CLASSES.TOOLTIP}.${CONSTANTS2.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
         },
         // Convert SilverStripe [image ...] shortcodes to HTML <img ...> for TipTap rendering
         normalizeContent: function(content) {
@@ -44930,17 +44930,17 @@ and ensure you are accounting for this risk.
           button.on("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            $3(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-            const toolbar = button.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
-            toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-            dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
+            $3(`.${CONSTANTS2.CSS_CLASSES.TOOLTIP}.${CONSTANTS2.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+            const toolbar = button.closest(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
+            toolbar.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+            dropdownMenu.toggleClass(CONSTANTS2.CSS_CLASSES.SHOW);
           });
         },
         // Create generic dropdown for grouped objects
         createGenericDropdown: function(item, dropdownConfig, editor, config) {
-          const dropdown = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
+          const dropdown = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN}"></div>`);
           const button = $3(`<button type="button" data-action="${item.title}" class="${item.icon}"></button>`);
-          const dropdownMenu = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
+          const dropdownMenu = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
           this.addTooltip(button, item.title);
           item.items.forEach((action) => {
             if (typeof action === "string") {
@@ -44973,7 +44973,7 @@ and ensure you are accounting for this risk.
           this.addTooltip(button, itemConfig.title);
           button.on("click", (e) => {
             e.preventDefault();
-            if (button.hasClass(CONSTANTS.CSS_CLASSES.DISABLED)) {
+            if (button.hasClass(CONSTANTS2.CSS_CLASSES.DISABLED)) {
               return;
             }
             const capability = this.getTool(itemConfig.action);
@@ -44985,7 +44985,7 @@ and ensure you are accounting for this risk.
                 host: this,
                 context: {
                   $: $3,
-                  constants: CONSTANTS,
+                  constants: CONSTANTS2,
                   normalizeContent: (html) => this.normalizeContent(html),
                   autoResizeTextarea: (textarea) => this.autoResizeTextarea(textarea),
                   dispatchReduxFormChange: (change) => self.dispatchReduxFormChange(change)
@@ -44993,19 +44993,19 @@ and ensure you are accounting for this risk.
               });
             }
             setTimeout(() => {
-              self.updateToolbarStates(button.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`), editor);
-            }, CONSTANTS.TOOLBAR_UPDATE_DELAY);
+              self.updateToolbarStates(button.closest(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`), editor);
+            }, CONSTANTS2.TOOLBAR_UPDATE_DELAY);
           });
           return button;
         },
         // Create a toolbar dropdown - used for table and style
         createToolbarDropdown: function(itemConfig, editor, tool) {
-          const dropdown = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN}"></div>`);
+          const dropdown = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN}"></div>`);
           const button = $3(`<button type="button" data-action="${itemConfig.action}"></button>`);
-          const dropdownMenu = $3(`<div class="${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
+          const dropdownMenu = $3(`<div class="${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}"></div>`);
           const capability = this.getTool(itemConfig.action);
           if (itemConfig.type === "dropdown") {
-            dropdownMenu.addClass(CONSTANTS.CSS_CLASSES.TABLE_DROPDOWN);
+            dropdownMenu.addClass(CONSTANTS2.CSS_CLASSES.TABLE_DROPDOWN);
           }
           this.addTooltip(button, itemConfig.title);
           capability && capability.renderDropdownOptions({
@@ -45017,7 +45017,7 @@ and ensure you are accounting for this risk.
             host: this,
             context: {
               $: $3,
-              constants: CONSTANTS,
+              constants: CONSTANTS2,
               parseTooltipText: (text) => this.parseTooltipText(text),
               addTooltip: (btn, text) => this.addTooltip(btn, text),
               updateToolbarStates: (toolbar, editorInstance) => this.updateToolbarStates(toolbar, editorInstance)
@@ -45026,17 +45026,17 @@ and ensure you are accounting for this risk.
           button.on("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            $3(`.${CONSTANTS.CSS_CLASSES.TOOLTIP}.${CONSTANTS.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
-            const toolbar = dropdown.closest(`.${CONSTANTS.CSS_CLASSES.TOOLBAR}`);
-            toolbar.find(`.${CONSTANTS.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+            $3(`.${CONSTANTS2.CSS_CLASSES.TOOLTIP}.${CONSTANTS2.CSS_CLASSES.SHOW}`).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
+            const toolbar = dropdown.closest(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
+            toolbar.find(`.${CONSTANTS2.CSS_CLASSES.DROPDOWN_MENU}`).not(dropdownMenu).removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
             itemConfig.options.forEach((option) => {
               let optionBtn = dropdownMenu.find(`button[data-option-action="${option.action}"]`);
               optionBtn.toggleClass(
-                CONSTANTS.CSS_CLASSES.DISABLED,
+                CONSTANTS2.CSS_CLASSES.DISABLED,
                 tool.isOptionDisabled({ optionAction: option.action, editor })
               );
             });
-            dropdownMenu.toggleClass(CONSTANTS.CSS_CLASSES.SHOW);
+            dropdownMenu.toggleClass(CONSTANTS2.CSS_CLASSES.SHOW);
           });
           dropdown.append(button, dropdownMenu);
           return dropdown;
@@ -45052,20 +45052,20 @@ and ensure you are accounting for this risk.
           toolbar.find("button[data-action]").each(function() {
             const btn = $3(this);
             const action = btn.attr("data-action");
-            btn.removeClass(`${CONSTANTS.CSS_CLASSES.ACTIVE} ${CONSTANTS.CSS_CLASSES.DISABLED}`);
+            btn.removeClass(`${CONSTANTS2.CSS_CLASSES.ACTIVE} ${CONSTANTS2.CSS_CLASSES.DISABLED}`);
             self.updateToolbarButtonState(btn, action, editor);
           });
         },
         // Update individual button state based on action
         updateToolbarButtonState: function(button, action, editor) {
           const capability = this.getTool(action);
-          this.applyCapabilityButtonState(button, capability, editor, CONSTANTS);
+          this.applyCapabilityButtonState(button, capability, editor, CONSTANTS2);
         },
         // Update dropdown menu button states
         updateToolbarDropdownButtons: function(toolbar, editor) {
           toolbar.find(".dropdown-menu button").each((function() {
             const btn = $3(this);
-            this.applyDropdownButtonState(btn, editor, CONSTANTS, (action) => {
+            this.applyDropdownButtonState(btn, editor, CONSTANTS2, (action) => {
               if (!action) {
                 return null;
               }
@@ -45118,7 +45118,7 @@ and ensure you are accounting for this risk.
         addTooltip: function(button, tooltipText) {
           const self = this;
           const parts = this.parseTooltipText(tooltipText);
-          const tooltip = $3(`<div class="${CONSTANTS.CSS_CLASSES.TOOLTIP}"></div>`);
+          const tooltip = $3(`<div class="${CONSTANTS2.CSS_CLASSES.TOOLTIP}"></div>`);
           const tooltipTitle = $3('<div class="tooltip-title"></div>').text(parts.title);
           tooltip.append(tooltipTitle);
           if (parts.shortcut) {
@@ -45161,19 +45161,19 @@ and ensure you are accounting for this risk.
           const buttonOffset = button.offset();
           const buttonWidth = button.outerWidth();
           const buttonHeight = button.outerHeight();
-          tooltip.addClass(CONSTANTS.CSS_CLASSES.SHOW);
+          tooltip.addClass(CONSTANTS2.CSS_CLASSES.SHOW);
           const tooltipWidth = tooltip.outerWidth();
           tooltip.outerHeight();
           tooltip.css({
             position: "absolute",
             top: buttonOffset.top + buttonHeight + 8,
             left: buttonOffset.left + buttonWidth / 2 - tooltipWidth / 2,
-            zIndex: CONSTANTS.Z_INDEX.TOOLTIP
+            zIndex: CONSTANTS2.Z_INDEX.TOOLTIP
           });
         },
         // Hide tooltip
         hideTooltip: function(tooltip) {
-          tooltip.removeClass(CONSTANTS.CSS_CLASSES.SHOW);
+          tooltip.removeClass(CONSTANTS2.CSS_CLASSES.SHOW);
         },
         // Add keyboard shortcuts
         addKeyboardShortcuts: function(wrapper, editor) {
