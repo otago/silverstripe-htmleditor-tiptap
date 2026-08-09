@@ -77,6 +77,7 @@ export default {
     return false;
   },
   isDisabled(editor) {
+    return false;
     return !canToggleBulletList(editor);
   },
 };

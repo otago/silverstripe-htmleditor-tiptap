@@ -1,5 +1,7 @@
-// src/tiptap.entwine.js
-import { Editor } from '@tiptap/core';
+/**
+ * The main binding between SilverStripe and TipTap. This file handles the initialization of the TipTap editor, toolbar creation, and event handling.
+ */
+import { Editor,getNodeType } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
@@ -20,6 +22,10 @@ import screenfull from 'screenfull';
 import InternalAnchor from './InternalAnchor';
 import { Indent } from './indent';
 //import { ImagePlus } from 'tiptap-image-plus';
+import ListItem from '@tiptap/extension-list-item';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+
 
 import {
   initializeLinkBubbleMenu,
@@ -153,6 +159,95 @@ const TipTapImageResize = ImageResize.extend({
 });
 
 
+function changeChildNodeTypes(content, sourceTypeName, targetType) {
+  let newContent = content;
+
+  for (let i = 0; i < content.childCount; i++) {
+    const node = content.child(i);
+
+    if (node.type.name === sourceTypeName) {
+      const targetNode = targetType.create(node.attrs, node.content, node.marks);
+      newContent = newContent.replaceChild(i, targetNode);
+    }
+  }
+
+  return newContent;
+};
+
+
+
+const InlineListItem = ListItem.extend({
+  content: "text*",
+
+  addCommands() {
+    return {
+      liftListItem:
+        () =>
+        ({ tr, state, dispatch }) => {
+          const paragraphType = getNodeType("paragraph", state.schema);
+
+          const { $from, $to } = tr.selection;
+          const range = $from.blockRange($to);
+
+          if (!range) {
+            return false;
+          }
+
+          if (dispatch) {
+            const content = tr.doc.slice(range.start, range.end).content;
+
+            const paragraphs = changeChildNodeTypes(content, "listItem", paragraphType);
+
+            // -1 to delete the parent list
+            tr.replaceWith(range.start - 1, range.end, paragraphs);
+          }
+
+          return true;
+        },
+      wrapInList:
+        (typeOrName, attributes = {}) =>
+        ({ tr, state, dispatch }) => {
+          const listType = getNodeType(typeOrName, state.schema);
+          const listItemType = getNodeType("listItem", state.schema);
+
+          const { $from, $to } = tr.selection;
+          const range = $from.blockRange($to);
+
+          if (!range) {
+            return false;
+          }
+
+          if (dispatch) {
+            const content = tr.doc.slice(range.start, range.end).content;
+
+            const listItems = changeChildNodeTypes(content, "paragraph", listItemType);
+
+            const listNode = listType.create(attributes, listItems);
+
+            tr.replaceWith(range.start, range.end, listNode);
+          }
+
+          return true;
+        },
+    };
+  },
+});
+
+
+function cleanListParagraphs(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  doc.querySelectorAll('li').forEach(li => {
+    const children = Array.from(li.children);
+
+    if (children.length === 1 && children[0].tagName === 'P') {
+      li.innerHTML = children[0].innerHTML;
+    }
+  });
+  return doc.body.innerHTML;
+}
+
+
 (function ($) {
   // Configuration constants
   const CONSTANTS = {
@@ -236,9 +331,12 @@ const TipTapImageResize = ImageResize.extend({
               link: {
                 openOnClick: false,
               },
+              listItem: false,
             }),
             TipTapImageResize,
-            //ImagePlus,
+            BulletList,
+            OrderedList,
+            InlineListItem,
             Youtube,
             // Additional extensions not included in StarterKit
             //Underline,
@@ -305,6 +403,15 @@ const TipTapImageResize = ImageResize.extend({
             content: initialContent,
             autofocus: config.autofocus || false,
             onUpdate: ({ editor }) => {
+              // const html = editor.getHTML();
+              // const cleanHtml = cleanListParagraphs(html);
+
+              // if (html !== cleanHtml) {
+              //   editor.commands.setContent(cleanHtml, false);
+              // }
+
+              // this.dispatchReduxFormChange(cleanHtml);
+              
               const html = editor.getHTML();
               this.dispatchReduxFormChange(html);
             },

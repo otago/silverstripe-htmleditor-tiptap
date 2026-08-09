@@ -2449,7 +2449,7 @@
   function isStyleRule(rule2) {
     return rule2.style != null;
   }
-  class DOMParser {
+  let DOMParser$1 = class DOMParser {
     /**
     Create a parser that targets the given schema, using the given
     parsing rules.
@@ -2577,7 +2577,7 @@
     static fromSchema(schema) {
       return schema.cached.domParser || (schema.cached.domParser = new DOMParser(schema, DOMParser.schemaRules(schema)));
     }
-  }
+  };
   const blockTags = {
     address: true,
     article: true,
@@ -9287,7 +9287,7 @@
         dom = child;
       }
     if (!slice) {
-      let parser2 = view.someProp("clipboardParser") || view.someProp("domParser") || DOMParser.fromSchema(view.state.schema);
+      let parser2 = view.someProp("clipboardParser") || view.someProp("domParser") || DOMParser$1.fromSchema(view.state.schema);
       slice = parser2.parseSlice(dom, {
         preserveWhitespace: !!(asText || sliceData),
         context: $context,
@@ -11207,7 +11207,7 @@
       }
     }
     let startDoc = view.state.doc;
-    let parser2 = view.someProp("domParser") || DOMParser.fromSchema(view.state.schema);
+    let parser2 = view.someProp("domParser") || DOMParser$1.fromSchema(view.state.schema);
     let $from = startDoc.resolve(from);
     let sel = null, doc2 = parser2.parse(parent, {
       topNode: $from.parent,
@@ -12443,7 +12443,7 @@
     }
     return false;
   };
-  function getNodeType(nameOrType, schema) {
+  function getNodeType$1(nameOrType, schema) {
     if (typeof nameOrType === "string") {
       if (!schema.nodes[nameOrType]) {
         throw Error(
@@ -12455,7 +12455,7 @@
     return nameOrType;
   }
   var deleteNode = (typeOrName) => ({ tr: tr2, state, dispatch: dispatch2 }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     const $pos = tr2.selection.$anchor;
     for (let depth = $pos.depth; depth > 0; depth -= 1) {
       const node2 = $pos.node(depth);
@@ -12800,12 +12800,12 @@
           })
         });
         if (options.slice) {
-          DOMParser.fromSchema(contentCheckSchema).parseSlice(
+          DOMParser$1.fromSchema(contentCheckSchema).parseSlice(
             elementFromString(content),
             options.parseOptions
           );
         } else {
-          DOMParser.fromSchema(contentCheckSchema).parse(
+          DOMParser$1.fromSchema(contentCheckSchema).parse(
             elementFromString(content),
             options.parseOptions
           );
@@ -12816,7 +12816,7 @@
           });
         }
       }
-      const parser2 = DOMParser.fromSchema(schema);
+      const parser2 = DOMParser$1.fromSchema(schema);
       if (options.slice) {
         return parser2.parseSlice(elementFromString(content), options.parseOptions).content;
       }
@@ -13069,7 +13069,7 @@
   };
   function isNodeActive(state, typeOrName, attributes = {}) {
     const { from, to, empty: empty2 } = state.selection;
-    const type = typeOrName ? getNodeType(typeOrName, state.schema) : null;
+    const type = typeOrName ? getNodeType$1(typeOrName, state.schema) : null;
     const nodeRanges = [];
     state.doc.nodesBetween(from, to, (node2, pos) => {
       if (node2.isText) {
@@ -13097,7 +13097,7 @@
     return range >= selectionRange;
   }
   var lift = (typeOrName, attributes = {}) => ({ state, dispatch: dispatch2 }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     const isActive2 = isNodeActive(state, type, attributes);
     if (!isActive2) {
       return false;
@@ -13108,7 +13108,7 @@
     return liftEmptyBlock$1(state, dispatch2);
   };
   var liftListItem = (typeOrName) => ({ state, dispatch: dispatch2 }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     return liftListItem$1(type)(state, dispatch2);
   };
   var newlineInCode = () => ({ state, dispatch: dispatch2 }) => {
@@ -13143,7 +13143,7 @@
       return false;
     }
     if (schemaType === "node") {
-      nodeType = getNodeType(typeOrName, state.schema);
+      nodeType = getNodeType$1(typeOrName, state.schema);
     }
     if (schemaType === "mark") {
       markType = getMarkType(typeOrName, state.schema);
@@ -13837,7 +13837,7 @@
     );
   }
   function getNodeAttributes(state, typeOrName) {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     const { from, to } = state.selection;
     const nodes = [];
     state.doc.nodesBetween(from, to, (node22) => {
@@ -14285,7 +14285,7 @@
     return true;
   };
   var setNode = (typeOrName, attributes = {}) => ({ state, dispatch: dispatch2, chain }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     let attributesToCopy;
     if (state.selection.$anchor.sameParent(state.selection.$head)) {
       attributesToCopy = state.selection.$anchor.parent.attrs;
@@ -14354,7 +14354,7 @@
     return true;
   };
   var sinkListItem = (typeOrName) => ({ state, dispatch: dispatch2 }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     return sinkListItem$1(type)(state, dispatch2);
   };
   function ensureMarks(state, splittableMarks) {
@@ -14429,7 +14429,7 @@
   };
   var splitListItem = (typeOrName, overrideAttrs = {}) => ({ tr: tr2, state, dispatch: dispatch2, editor }) => {
     var _a;
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     const { $from, $to } = state.selection;
     const node2 = state.selection.node;
     if (node2 && node2.isBlock || $from.depth < 2 || !$from.sameParent($to)) {
@@ -14566,8 +14566,8 @@
   }
   var toggleList = (listTypeOrName, itemTypeOrName, keepMarks, attributes = {}) => ({ editor, tr: tr2, state, dispatch: dispatch2, chain, commands, can }) => {
     const { extensions, splittableMarks } = editor.extensionManager;
-    const listType = getNodeType(listTypeOrName, state.schema);
-    const itemType = getNodeType(itemTypeOrName, state.schema);
+    const listType = getNodeType$1(listTypeOrName, state.schema);
+    const itemType = getNodeType$1(itemTypeOrName, state.schema);
     const { selection, storedMarks } = state;
     const { $from, $to } = selection;
     const range = $from.blockRange($to);
@@ -14639,8 +14639,8 @@
     return commands.setMark(type, attributes);
   };
   var toggleNode = (typeOrName, toggleTypeOrName, attributes = {}) => ({ state, commands }) => {
-    const type = getNodeType(typeOrName, state.schema);
-    const toggleType = getNodeType(toggleTypeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
+    const toggleType = getNodeType$1(toggleTypeOrName, state.schema);
     const isActive2 = isNodeActive(state, type, attributes);
     let attributesToCopy;
     if (state.selection.$anchor.sameParent(state.selection.$head)) {
@@ -14652,7 +14652,7 @@
     return commands.setNode(type, { ...attributesToCopy, ...attributes });
   };
   var toggleWrap = (typeOrName, attributes = {}) => ({ state, commands }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     const isActive2 = isNodeActive(state, type, attributes);
     if (isActive2) {
       return commands.lift(type);
@@ -14766,7 +14766,7 @@
       return false;
     }
     if (schemaType === "node") {
-      nodeType = getNodeType(typeOrName, state.schema);
+      nodeType = getNodeType$1(typeOrName, state.schema);
     }
     if (schemaType === "mark") {
       markType = getMarkType(typeOrName, state.schema);
@@ -14856,11 +14856,11 @@
     return canUpdate;
   };
   var wrapIn = (typeOrName, attributes = {}) => ({ state, dispatch: dispatch2 }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     return wrapIn$1(type, attributes)(state, dispatch2);
   };
   var wrapInList = (typeOrName, attributes = {}) => ({ state, dispatch: dispatch2 }) => {
-    const type = getNodeType(typeOrName, state.schema);
+    const type = getNodeType$1(typeOrName, state.schema);
     return wrapInList$1(type, attributes)(state, dispatch2);
   };
   var EventEmitter = class {
@@ -16142,7 +16142,7 @@ ${indentedChild}`;
             options: extension.options,
             storage: this.editor.extensionStorage[extension.name],
             editor,
-            type: getNodeType(extension.name, this.schema)
+            type: getNodeType$1(extension.name, this.schema)
           };
           const addNodeView = getExtensionField(
             extension,
@@ -23033,7 +23033,7 @@ ${prefix}
   });
   var findListItemPos = (typeOrName, state) => {
     const { $from } = state.selection;
-    const nodeType = getNodeType(typeOrName, state.schema);
+    const nodeType = getNodeType$1(typeOrName, state.schema);
     let currentNode = null;
     let currentDepth = $from.depth;
     let currentPos = $from.pos;
@@ -23170,7 +23170,7 @@ ${prefix}
     if (!node2) {
       return false;
     }
-    const nodeType = getNodeType(typeOrName, state.schema);
+    const nodeType = getNodeType$1(typeOrName, state.schema);
     let hasSubList = false;
     node2.descendants((child) => {
       if (child.type === nodeType) {
@@ -25817,7 +25817,7 @@ ${prefix}
       return extensions;
     }
   });
-  var index_default$a = StarterKit;
+  var index_default$d = StarterKit;
   var inputRegex$1 = /(?:^|\s)(!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\))$/;
   var Image = Node3.create({
     name: "image",
@@ -25970,7 +25970,7 @@ ${prefix}
       ];
     }
   });
-  var index_default$9 = Image;
+  var index_default$c = Image;
   var inputRegex = /(?:^|\s)(==(?!\s+==)((?:[^=]+))==(?!\s+==))$/;
   var pasteRegex = /(?:^|\s)(==(?!\s+==)((?:[^=]+))==(?!\s+==))/g;
   var Highlight = Mark.create({
@@ -26075,7 +26075,7 @@ ${prefix}
       ];
     }
   });
-  var index_default$8 = Highlight;
+  var index_default$b = Highlight;
   const sides = ["top", "right", "bottom", "left"];
   const alignments = ["start", "end"];
   const placements = /* @__PURE__ */ sides.reduce((acc, side) => acc.concat(side, side + "-" + alignments[0], side + "-" + alignments[1]), []);
@@ -29844,7 +29844,7 @@ ${prefix}
       ];
     }
   });
-  var index_default$7 = BubbleMenu;
+  var index_default$a = BubbleMenu;
   var TextAlign = Extension.create({
     name: "textAlign",
     addOptions() {
@@ -29907,7 +29907,7 @@ ${prefix}
       };
     }
   });
-  var index_default$6 = TextAlign;
+  var index_default$9 = TextAlign;
   var Subscript = Mark.create({
     name: "subscript",
     addOptions() {
@@ -29953,7 +29953,7 @@ ${prefix}
       };
     }
   });
-  var index_default$5 = Subscript;
+  var index_default$8 = Subscript;
   var Superscript = Mark.create({
     name: "superscript",
     addOptions() {
@@ -29999,7 +29999,7 @@ ${prefix}
       };
     }
   });
-  var index_default$4 = Superscript;
+  var index_default$7 = Superscript;
   var MAX_FIND_CHILD_SPAN_DEPTH = 20;
   var findChildSpans = (element, depth = 0) => {
     const childSpans = [];
@@ -30963,9 +30963,9 @@ ${prefix}
       return extensions;
     }
   });
-  var index_default$3 = TableRow;
-  var index_default$2 = TableHeader;
-  var index_default$1 = TableCell;
+  var index_default$6 = TableRow;
+  var index_default$5 = TableHeader;
+  var index_default$4 = TableCell;
   var YOUTUBE_REGEX = /^((?:https?:)?\/\/)?((?:www|m|music)\.)?((?:youtube\.com|youtu\.be|youtube-nocookie\.com))(\/(?:[\w-]+\?v=|embed\/|v\/)?)([\w-]+)(\S+)?$/;
   var YOUTUBE_REGEX_GLOBAL = /^((?:https?:)?\/\/)?((?:www|m|music)\.)?((?:youtube\.com|youtu\.be|youtube-nocookie\.com))(\/(?:[\w-]+\?v=|embed\/|v\/)?)([\w-]+)(\S+)?$/g;
   var isValidYoutubeUrl = (url) => {
@@ -31287,7 +31287,7 @@ ${prefix}
       allowedAttributes: ["src", "width", "height", "start"]
     })
   });
-  var index_default = Youtube;
+  var index_default$3 = Youtube;
   const CONSTANTS = {
     MOBILE_BREAKPOINT: 768,
     ICON_SIZE: "24px",
@@ -31879,7 +31879,7 @@ ${prefix}
       };
     }
   };
-  const ImageResize = index_default$9.extend(imageResizeConfig);
+  const ImageResize = index_default$c.extend(imageResizeConfig);
   class FigureNodeView extends ImageNodeView {
     constructor() {
       super(...arguments);
@@ -32249,15 +32249,15 @@ ${prefix}
     change: nativeAPI.fullscreenchange,
     error: nativeAPI.fullscreenerror
   };
-  let screenfull = {
+  let screenfull$1 = {
     // eslint-disable-next-line default-param-last
     request(element = document.documentElement, options) {
       return new Promise((resolve, reject) => {
         const onFullScreenEntered = () => {
-          screenfull.off("change", onFullScreenEntered);
+          screenfull$1.off("change", onFullScreenEntered);
           resolve();
         };
-        screenfull.on("change", onFullScreenEntered);
+        screenfull$1.on("change", onFullScreenEntered);
         const returnPromise = element[nativeAPI.requestFullscreen](options);
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenEntered).catch(reject);
@@ -32266,15 +32266,15 @@ ${prefix}
     },
     exit() {
       return new Promise((resolve, reject) => {
-        if (!screenfull.isFullscreen) {
+        if (!screenfull$1.isFullscreen) {
           resolve();
           return;
         }
         const onFullScreenExit = () => {
-          screenfull.off("change", onFullScreenExit);
+          screenfull$1.off("change", onFullScreenExit);
           resolve();
         };
-        screenfull.on("change", onFullScreenExit);
+        screenfull$1.on("change", onFullScreenExit);
         const returnPromise = document[nativeAPI.exitFullscreen]();
         if (returnPromise instanceof Promise) {
           returnPromise.then(onFullScreenExit).catch(reject);
@@ -32282,13 +32282,13 @@ ${prefix}
       });
     },
     toggle(element, options) {
-      return screenfull.isFullscreen ? screenfull.exit() : screenfull.request(element, options);
+      return screenfull$1.isFullscreen ? screenfull$1.exit() : screenfull$1.request(element, options);
     },
     onchange(callback) {
-      screenfull.on("change", callback);
+      screenfull$1.on("change", callback);
     },
     onerror(callback) {
-      screenfull.on("error", callback);
+      screenfull$1.on("error", callback);
     },
     on(event, callback) {
       const eventName = eventNameMap[event];
@@ -32304,7 +32304,7 @@ ${prefix}
     },
     raw: nativeAPI
   };
-  Object.defineProperties(screenfull, {
+  Object.defineProperties(screenfull$1, {
     isFullscreen: {
       get: () => Boolean(document[nativeAPI.fullscreenElement])
     },
@@ -32319,9 +32319,9 @@ ${prefix}
     }
   });
   if (!nativeAPI) {
-    screenfull = { isEnabled: false };
+    screenfull$1 = { isEnabled: false };
   }
-  const screenfull$1 = screenfull;
+  const screenfull = screenfull$1;
   const InternalAnchor = Node3.create({
     name: "internalAnchor",
     group: "inline",
@@ -32451,6 +32451,9 @@ ${prefix}
       };
     }
   });
+  var index_default$2 = ListItem;
+  var index_default$1 = BulletList;
+  var index_default = OrderedList;
   const IMAGE_NODE_TYPES = ["imageResize", "imagePlus", "image"];
   function shouldShowLinkBubbleMenu(editor) {
     const href = (editor.getAttributes("link").href || "").trim();
@@ -32687,7 +32690,7 @@ ${prefix}
     return menu.get(0);
   }
   function linkbubbletool(wrapper) {
-    return index_default$7.configure({
+    return index_default$a.configure({
       element: createLinkBubbleMenu(wrapper),
       pluginKey: "linkBubbleMenu",
       scrollTarget: getScrollTarget(wrapper),
@@ -32697,7 +32700,7 @@ ${prefix}
     });
   }
   function imagebubbletool(wrapper) {
-    return index_default$7.configure({
+    return index_default$a.configure({
       element: createImageBubbleMenu(wrapper),
       pluginKey: "imageBubbleMenu",
       scrollTarget: getScrollTarget(wrapper),
@@ -32808,15 +32811,6 @@ ${prefix}
     runArgs: [],
     isActive: (editor) => editor.isActive("bold")
   });
-  const hasAncestorListType$1 = (editor, typeName) => {
-    const { $from } = editor.state.selection;
-    for (let depth = $from.depth; depth > 0; depth -= 1) {
-      if ($from.node(depth).type.name === typeName) {
-        return true;
-      }
-    }
-    return false;
-  };
   const convertNearestAncestorListType$1 = (editor, fromTypeName, toTypeName) => {
     const { state, view } = editor;
     const { $from } = state.selection;
@@ -32837,9 +32831,6 @@ ${prefix}
       return true;
     }
     return false;
-  };
-  const canToggleBulletList = (editor) => {
-    return editor.can().toggleBulletList() || hasAncestorListType$1(editor, "orderedList");
   };
   const bulletList = {
     action: "bulletList",
@@ -32872,7 +32863,7 @@ ${prefix}
       return false;
     },
     isDisabled(editor) {
-      return !canToggleBulletList(editor);
+      return false;
     }
   };
   const code = createCommandTool({
@@ -32908,21 +32899,21 @@ ${prefix}
       };
     },
     run({ button, context }) {
-      if (!screenfull$1.isEnabled) {
+      if (!screenfull.isEnabled) {
         return;
       }
       const wrapper = button.closest(`.${context.constants.CSS_CLASSES.WRAPPER}`)[0];
-      if (screenfull$1.isFullscreen) {
-        screenfull$1.exit();
+      if (screenfull.isFullscreen) {
+        screenfull.exit();
         return;
       }
-      screenfull$1.request(wrapper);
+      screenfull.request(wrapper);
     },
     isActive(editor) {
-      return screenfull$1.isEnabled ? screenfull$1.isFullscreen : false;
+      return screenfull.isEnabled ? screenfull.isFullscreen : false;
     },
     isDisabled(editor) {
-      return !screenfull$1.isEnabled;
+      return !screenfull.isEnabled;
     }
   };
   const heading1 = createCommandTool({
@@ -44554,7 +44545,7 @@ and ensure you are accounting for this risk.
       return { "data-id": String(attributes["data-id"]) };
     }
   };
-  const TipTapImage = index_default$9.extend({
+  const TipTapImage = index_default$c.extend({
     addAttributes() {
       var _a;
       return {
@@ -44569,6 +44560,54 @@ and ensure you are accounting for this risk.
       return {
         ...((_a = this.parent) == null ? void 0 : _a.call(this)) || {},
         "data-id": imageIdAttribute
+      };
+    }
+  });
+  function changeChildNodeTypes(content, sourceTypeName, targetType) {
+    let newContent = content;
+    for (let i2 = 0; i2 < content.childCount; i2++) {
+      const node2 = content.child(i2);
+      if (node2.type.name === sourceTypeName) {
+        const targetNode = targetType.create(node2.attrs, node2.content, node2.marks);
+        newContent = newContent.replaceChild(i2, targetNode);
+      }
+    }
+    return newContent;
+  }
+  const InlineListItem = index_default$2.extend({
+    content: "text*",
+    addCommands() {
+      return {
+        liftListItem: () => ({ tr: tr2, state, dispatch: dispatch2 }) => {
+          const paragraphType = getNodeType$1("paragraph", state.schema);
+          const { $from, $to } = tr2.selection;
+          const range = $from.blockRange($to);
+          if (!range) {
+            return false;
+          }
+          if (dispatch2) {
+            const content = tr2.doc.slice(range.start, range.end).content;
+            const paragraphs = changeChildNodeTypes(content, "listItem", paragraphType);
+            tr2.replaceWith(range.start - 1, range.end, paragraphs);
+          }
+          return true;
+        },
+        wrapInList: (typeOrName, attributes = {}) => ({ tr: tr2, state, dispatch: dispatch2 }) => {
+          const listType = getNodeType$1(typeOrName, state.schema);
+          const listItemType = getNodeType$1("listItem", state.schema);
+          const { $from, $to } = tr2.selection;
+          const range = $from.blockRange($to);
+          if (!range) {
+            return false;
+          }
+          if (dispatch2) {
+            const content = tr2.doc.slice(range.start, range.end).content;
+            const listItems = changeChildNodeTypes(content, "paragraph", listItemType);
+            const listNode = listType.create(attributes, listItems);
+            tr2.replaceWith(range.start, range.end, listNode);
+          }
+          return true;
+        }
       };
     }
   });
@@ -44635,28 +44674,31 @@ and ensure you are accounting for this risk.
             this.after(wrapper);
             this.hide();
             const extensions = [
-              index_default$a.configure({
+              index_default$d.configure({
                 link: {
                   openOnClick: false
-                }
+                },
+                listItem: false
               }),
               TipTapImageResize,
-              //ImagePlus,
+              index_default$1,
               index_default,
+              InlineListItem,
+              index_default$3,
               // Additional extensions not included in StarterKit
               //Underline,
               TipTapImage,
-              index_default$8,
+              index_default$b,
               InternalAnchor,
               linkbubbletool(wrapper),
               imagebubbletool(wrapper),
-              index_default$6.configure({
+              index_default$9.configure({
                 types: ["heading", "paragraph"],
                 alignments: ["left", "center", "right", "justify"]
               }),
               Indent,
-              index_default$5,
-              index_default$4,
+              index_default$8,
+              index_default$7,
               TextStyle.extend({
                 parseHTML() {
                   return [
@@ -44692,9 +44734,9 @@ and ensure you are accounting for this risk.
                 resizable: true,
                 cellMinWidth: CONSTANTS2.TABLE_MIN_WIDTH
               }),
-              index_default$3,
-              index_default$2,
-              index_default$1
+              index_default$6,
+              index_default$5,
+              index_default$4
             ];
             const initialContent = this.normalizeContent(this.val() || config.content || "");
             const editor = new Editor({
@@ -44724,14 +44766,14 @@ and ensure you are accounting for this risk.
                     handleElementalToggleKeys
                   });
                 }
-                if (screenfull$1.isEnabled) {
+                if (screenfull.isEnabled) {
                   const self = this;
-                  screenfull$1.on("change", () => {
+                  screenfull.on("change", () => {
                     const toolbar = wrapper.find(`.${CONSTANTS2.CSS_CLASSES.TOOLBAR}`);
                     if (toolbar.length) {
                       self.updateToolbarStates(toolbar, editor2);
                     }
-                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull$1.isFullscreen);
+                    wrapper.toggleClass(CONSTANTS2.CSS_CLASSES.FULLSCREEN, screenfull.isFullscreen);
                   });
                 }
                 initializeLinkBubbleMenu(wrapper, editor2, this.getTool("ss-link-site"), this.getTool("ss-link-media"));
