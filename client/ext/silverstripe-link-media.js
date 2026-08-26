@@ -126,8 +126,10 @@ function resolveMediaUrl(data, file) {
     //     return `/assets/${String(fileHash).substring(0, 10)}/${fileFilename}`;
     // }
 
-    const mediaId = resolveMediaId(data, file);
-    return mediaId ? `/assets/files/${mediaId}` : '';
+    // No URL anywhere in the payload. `/assets/files/<id>` is not a route — it 403s at the
+    // web server — so an empty src, which is visibly broken in the editor, beats a link that
+    // looks fine until someone clicks it.
+    return '';
 }
 
 window.TipTapExtensions['ss-link-media'] = {
@@ -448,62 +450,75 @@ window.TipTapExtensions['ss-link-media'] = {
     },
 
     /**
+     * Resolve the ShortcodeSerialiser singleton.
+     *
+     * The admin bundle publishes the serialiser's *module namespace* on
+     * `window.ShortcodeSerialiser`, so serialise()/match() live on `.default`, not on the
+     * namespace itself. Calling them on the namespace throws, which is how file links
+     * ended up as a made-up `/assets/files/<id>` URL that 403s on the front end.
+     *
+     * @returns {Object|null} The serialiser, or null if the admin bundle is not loaded
+     */
+    getShortcodeSerialiser: function () {
+        const ns = window.ShortcodeSerialiser;
+        if (!ns) {
+            return null;
+        }
+        if (typeof ns.serialise === 'function') {
+            return ns;
+        }
+        if (ns.default && typeof ns.default.serialise === 'function') {
+            return ns.default;
+        }
+        return null;
+    },
+
+    /**
+     * Build the `[file_link,id=N]` shortcode for a file.
+     *
+     * A file link must always be stored as a shortcode: FileShortcodeProvider resolves it to
+     * the real (possibly protected) URL at render time, and FileLinkTracking reads it to
+     * publish the file alongside its owner page. A literal URL does neither, so the link 403s
+     * and the file silently stays in draft.
+     *
+     * @param {number|string} id - File ID
+     * @param {string} [anchor] - Optional anchor to append
+     * @returns {string} The shortcode, with anchor if supplied
+     */
+    buildFileLinkShortcode: function (id, anchor) {
+        const serialiser = this.getShortcodeSerialiser();
+        let shortcode = '';
+
+        if (serialiser) {
+            try {
+                shortcode = serialiser.serialise({
+                    name: 'file_link',
+                    properties: { id: id },
+                }, true);
+            } catch (e) {
+                console.warn('Error creating file_link shortcode:', e);
+            }
+        }
+
+        if (!shortcode) {
+            shortcode = `[file_link,id=${id}]`;
+        }
+
+        return anchor && anchor.length ? `${shortcode}#${anchor}` : shortcode;
+    },
+
+    /**
      * Build file attributes following TinyMCE pattern
      * @param {Object} data - File data from SilverStripe
      * @returns {Object} Link attributes
      */
     buildFileAttributes: function (data) {
-        // Try different approaches to build the file link
-        let href = '';
-
-        // If we have ShortcodeSerialiser available, try to use it
-        if (window.ShortcodeSerialiser && data.ID) {
-            try {
-                // Try different serialization methods that might be available
-                if (typeof window.ShortcodeSerialiser.serialise === 'function') {
-                    const shortcode = window.ShortcodeSerialiser.serialise({
-                        name: 'file_link',
-                        properties: { id: data.ID },
-                    }, true);
-                    href = shortcode;
-                } else if (typeof window.ShortcodeSerialiser.serialize === 'function') {
-                    // Try US spelling
-                    const shortcode = window.ShortcodeSerialiser.serialize({
-                        name: 'file_link',
-                        properties: { id: data.ID },
-                    }, true);
-                    href = shortcode;
-                } else if (typeof window.ShortcodeSerialiser.create === 'function') {
-                    // Try create method
-                    href = window.ShortcodeSerialiser.create('file_link', { id: data.ID });
-                } else {
-                    // Manual shortcode construction
-                    href = `[file_link,id=${data.ID}]`;
-                }
-
-                // Add anchor if provided
-                const anchor = data.Anchor && data.Anchor.length ? `#${data.Anchor}` : '';
-                href = `${href}${anchor}`;
-
-            } catch (e) {
-                console.warn('Error creating shortcode:', e);
-                // Fall through to direct URL approach
-            }
-        }
-
-        // Fallback to direct URL if shortcode creation failed
-        if (!href) {
-            href = data.url || data.URL || data.FileURL;
-            if (!href && data.ID) {
-                // Try to construct a file URL using the file hash and filename
-                if (data.FileHash && data.FileFilename) {
-                    href = `/assets/${data.FileHash.substring(0, 10)}/${data.FileFilename}`;
-                } else {
-                    // Last resort - simple ID-based URL
-                    href = `/assets/files/${data.ID}`;
-                }
-            }
-        }
+        // Always prefer the shortcode. It is the only form the front end resolves and the only
+        // form link tracking sees, so never fall back to a hand-built asset URL.
+        const id = resolveMediaId(data, null);
+        const href = id
+            ? this.buildFileLinkShortcode(id, data.Anchor)
+            : (data.url || data.URL || data.FileURL || '');
 
         const attributes = {
             href: href || '',
@@ -744,23 +759,12 @@ window.TipTapExtensions['ss-link-media'] = {
             // console.log('file:', file);
             // console.log('selectedText:', selectedText);
 
-            // Build shortcode for file link
-            let href = '';
-            if (window.ShortcodeSerialiser && data.ID) {
-                try {
-                    const shortcode = window.ShortcodeSerialiser.serialise({
-                        name: 'file_link',
-                        properties: { id: data.ID },
-                    }, true);
-                    href = shortcode;
-                    //   console.log('Generated shortcode:', shortcode);
-                } catch (e) {
-                    console.warn('Error creating shortcode:', e);
-                    href = data.url || data.URL || `/assets/files/${data.ID}`;
-                }
-            } else {
-                href = data.url || data.URL || (data.ID ? `/assets/files/${data.ID}` : '');
-            }
+            // Build shortcode for file link. `data` here is the modal's form payload, which
+            // carries the File ID but no URL, so the shortcode is the only usable href.
+            const fileId = resolveMediaId(data, file);
+            const href = fileId
+                ? this.buildFileLinkShortcode(fileId, data.Anchor)
+                : (data.url || data.URL || '');
 
             // console.log('Final href:', href);
 
