@@ -468,15 +468,6 @@ function cleanListParagraphs(html) {
             content: initialContent,
             autofocus: config.autofocus || false,
             onUpdate: ({ editor }) => {
-              // const html = editor.getHTML();
-              // const cleanHtml = cleanListParagraphs(html);
-
-              // if (html !== cleanHtml) {
-              //   editor.commands.setContent(cleanHtml, false);
-              // }
-
-              // this.dispatchReduxFormChange(cleanHtml);
-              
               const html = editor.getHTML();
               this.dispatchReduxFormChange(html);
             },

@@ -294,7 +294,7 @@ class TipTapFieldExtension extends Extension
         }
     }
     /**
-     * Ensure image shortcodes are converted to editor-visible img tags before rendering.
+     * We put the raw html into the editor, as we change <embed> shortcodes to actual iframe tags for display.
      */
     public function RawShortcodesForEditor()
     {
