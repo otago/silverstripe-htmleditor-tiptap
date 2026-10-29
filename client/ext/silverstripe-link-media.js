@@ -130,6 +130,168 @@ function resolveMediaUrl(data, file) {
     return mediaId ? `/assets/files/${mediaId}` : '';
 }
 
+function resolveMediaIdFromElement(imageElement) {
+    if (!imageElement) {
+        return null;
+    }
+
+    const rawId = imageElement.getAttribute('data-id') || imageElement.getAttribute('id');
+    if (rawId !== null && rawId !== '') {
+        const parsed = parseInt(rawId, 10);
+        if (!Number.isNaN(parsed)) {
+            return parsed;
+        }
+    }
+
+    const src = imageElement.getAttribute('src') || '';
+    const idMatch = src.match(/\/assets\/files\/(\d+)(?:$|[?#\/])/i);
+    if (idMatch && idMatch[1]) {
+        const parsed = parseInt(idMatch[1], 10);
+        return Number.isNaN(parsed) ? null : parsed;
+    }
+
+    return null;
+}
+
+function setReactInputValue(input, nextValue) {
+    const value = String(nextValue === undefined || nextValue === null ? '' : nextValue);
+    const prototype = Object.getPrototypeOf(input);
+    const descriptor = prototype && Object.getOwnPropertyDescriptor(prototype, 'value');
+    const nativeSetter = descriptor && descriptor.set;
+    const previousValue = input.value;
+
+    if (nativeSetter) {
+        nativeSetter.call(input, value);
+    } else {
+        input.value = value;
+    }
+
+    if (input._valueTracker) {
+        input._valueTracker.setValue(previousValue);
+    }
+
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function updateFieldIfEmpty(container, selectors, value) {
+    if (value === undefined || value === null || value === '') {
+        return false;
+    }
+
+    const nextValue = String(value);
+    for (let i = 0; i < selectors.length; i++) {
+        const field = container.querySelector(selectors[i]);
+        console.log('Checking field for selector:', selectors[i]);
+        if (!field) {
+            continue;
+        }
+        setReactInputValue(field, nextValue);
+        return true;
+    }
+
+    return false;
+}
+
+function attachModalFieldPrefill(modalContainer, mediaAttributes) {
+    if (!modalContainer || !mediaAttributes) {
+        return null;
+    }
+
+    const target = {
+        AltText: mediaAttributes.AltText || '',
+        Title: mediaAttributes.Title || '',
+        Width: mediaAttributes.Width,
+        Height: mediaAttributes.Height,
+    };
+
+    if (!target.AltText && !target.Title && !target.Width && !target.Height) {
+        return null;
+    }
+
+    const applyPrefill = (formRoot) => {
+        console.log('Applying prefill to form root:', formRoot);
+        const changedAlt = updateFieldIfEmpty(formRoot, [
+            'input[name$="[AltText]"]',
+            'input[name="AltText"]',
+            'input[id*="AltText"]',
+        ], target.AltText);
+        
+        const changedTitle = updateFieldIfEmpty(formRoot, [
+            'input[name$="[TitleTooltip]"]',
+            'input[name="TitleTooltip"]',
+            'input[id*="TitleTooltip"]',
+        ], target.Title);
+
+        const changedWidth = updateFieldIfEmpty(formRoot, [
+            'input[name$="[Width]"]',
+            'input[name="Width"]',
+            'input[id*="Width"]',
+        ], target.Width);
+
+        const changedHeight = updateFieldIfEmpty(formRoot, [
+            'input[name$="[Height]"]',
+            'input[name="Height"]',
+            'input[id*="Height"]',
+        ], target.Height);
+
+        return changedAlt || changedTitle || changedWidth || changedHeight;
+    };
+
+    let observer = null;
+    let intervalId = null;
+
+    const stopWatching = () => {
+        if (observer) {
+            observer.disconnect();
+            observer = null;
+        }
+        if (intervalId !== null) {
+            window.clearInterval(intervalId);
+            intervalId = null;
+        }
+    };
+
+    const checkForAjaxForm = () => {
+        const formRoot = document.querySelector('#Form_fileInsertForm');
+        if (!formRoot) {
+            return false;
+        }
+
+        applyPrefill(formRoot);
+        // The form exists now; no need to keep mutating/polling.
+        stopWatching();
+        return true;
+    };
+
+    if (checkForAjaxForm()) {
+        return null;
+    }
+
+    observer = new MutationObserver(() => {
+        checkForAjaxForm();
+    });
+
+    observer.observe(modalContainer, {
+        childList: true,
+        subtree: true,
+    });
+
+    // Poll for AJAX form ID as a backup for delayed DOM updates.
+    intervalId = window.setInterval(() => {
+        checkForAjaxForm();
+    }, 120);
+
+    const timeoutId = window.setTimeout(() => {
+        stopWatching();
+    }, 8000);
+
+    return () => {
+        window.clearTimeout(timeoutId);
+        stopWatching();
+    };
+}
+
 window.TipTapExtensions['ss-link-media'] = {
     action: 'ss-link-media',
 
@@ -218,8 +380,9 @@ window.TipTapExtensions['ss-link-media'] = {
         }
 
 
-        // Get original media attributes
+        // Match TinyMCE shape: strip `url` before passing fileAttributes.
         const mediaAttributes = this.getOriginalMediaAttributes(editor);
+        const { url, ...modalFileAttributes } = mediaAttributes || {};
 
         // Define event handlers
         const handleInsert = async (data, file) => {
@@ -271,8 +434,17 @@ window.TipTapExtensions['ss-link-media'] = {
 
         // Require link text if there's no selection or if an image is selected
         const requireLinkText = tagName !== 'A' && (tagName === 'IMG' || selectionContent.trim() === '');
-        const fileSelected = mediaAttributes.hasOwnProperty('ID') && mediaAttributes.ID !== null;
+        const fileSelected = modalFileAttributes.hasOwnProperty('ID') && modalFileAttributes.ID !== null;
 
+        // Diagnostic: this is the exact condition that blocks server-side edit form hydration.
+        if (!fileSelected && (modalFileAttributes.AltText || modalFileAttributes.Caption)) {
+            console.warn('InsertMediaModal prefill likely blocked: missing file ID while AltText/Caption exists', {
+                fileAttributes: modalFileAttributes,
+                requireLinkText,
+                selectionContent,
+                tagName,
+            });
+        }
         // Create the modal element using React.createElement (not JSX)
         const modalElement = window.React.createElement(InjectableInsertMediaModal, {
             isOpen: true,
@@ -283,13 +455,20 @@ window.TipTapExtensions['ss-link-media'] = {
             title: false,
             bodyClassName: "modal__dialog",
             className: "insert-media-react__dialog-wrapper",
-            fileAttributes: mediaAttributes,
+            fileAttributes: modalFileAttributes,
             fileSelected: fileSelected,
             requireLinkText: requireLinkText
         });
 
         // Render the modal
         root.render(modalElement);
+
+        // fileAttributes does not work. So instead we poll until the image details form appears and populate it that way.
+        if (this.modalPrefillCleanup) {
+            this.modalPrefillCleanup();
+            this.modalPrefillCleanup = null;
+        }
+        this.modalPrefillCleanup = attachModalFieldPrefill(modalContainer, mediaAttributes);
 
     },
 
@@ -303,11 +482,37 @@ window.TipTapExtensions['ss-link-media'] = {
         const { from, to } = editor.state.selection;
         const node = editor.view.domAtPos(from).node;
         const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
-        const imageElement = element && element.tagName === 'IMG'
+        let imageElement = element && element.tagName === 'IMG'
             ? element
             : element && typeof element.querySelector === 'function'
                 ? element.querySelector('img')
                 : null;
+
+        // Cursor can be inside caption text/wrappers. Walk up to resolve related image.
+        if (!imageElement && element && typeof element.closest === 'function') {
+            const captionContainer = element.closest('.captionImage');
+            if (captionContainer) {
+                imageElement = captionContainer.querySelector('img');
+            }
+
+            if (!imageElement) {
+                const figure = element.closest('figure');
+                if (figure) {
+                    imageElement = figure.querySelector('img');
+                }
+            }
+
+            if (!imageElement) {
+                const linkedImage = element.closest('a');
+                if (linkedImage) {
+                    imageElement = linkedImage.querySelector('img');
+                }
+            }
+        }
+
+        if (!imageElement && element && element.parentElement && typeof element.parentElement.querySelector === 'function') {
+            imageElement = element.parentElement.querySelector('img');
+        }
 
         if (!element && !imageElement) {
             return {};
@@ -315,13 +520,13 @@ window.TipTapExtensions['ss-link-media'] = {
 
         // Handle image elements
         if (imageElement) {
-            const captionContainer = imageElement.closest('.captionImage');
-            const caption = captionContainer ? captionContainer.querySelector('.caption') : null;
+            const captionContainer = imageElement.closest('.captionImage') || imageElement.closest('figure');
+            const caption = captionContainer ? captionContainer.querySelector('.caption, figcaption') : null;
             const styleAlignment = inferAlignmentFromResizeStyles(
                 imageElement.getAttribute('containerstyle'),
                 imageElement.getAttribute('wrapperstyle')
             );
-
+            const mediaId = resolveMediaIdFromElement(imageElement);
             return {
                 url: imageElement.getAttribute('src'),
                 AltText: imageElement.getAttribute('alt'),
@@ -331,7 +536,7 @@ window.TipTapExtensions['ss-link-media'] = {
                 TitleTooltip: imageElement.getAttribute('title'),
                 Alignment: styleAlignment || this.findPosition(imageElement.getAttribute('class')),
                 Caption: caption ? caption.textContent : '',
-                ID: imageElement.getAttribute('data-id') ? parseInt(imageElement.getAttribute('data-id'), 10) : null,
+                ID: mediaId,
             };
         }
 
@@ -518,6 +723,15 @@ window.TipTapExtensions['ss-link-media'] = {
      * Close the modal and clean up
      */
     closeModal: function () {
+        if (this.modalPrefillCleanup) {
+            try {
+                this.modalPrefillCleanup();
+            } catch (e) {
+                console.warn('Error cleaning modal prefill observer:', e);
+            }
+            this.modalPrefillCleanup = null;
+        }
+
         if (this.modalRoot) {
             try {
                 // React 18+ cleanup using root
@@ -811,6 +1025,15 @@ window.TipTapExtensions['ss-link-media'] = {
      * Close the modal and clean up
      */
     closeModal: function () {
+        if (this.modalPrefillCleanup) {
+            try {
+                this.modalPrefillCleanup();
+            } catch (e) {
+                console.warn('Error cleaning modal prefill observer:', e);
+            }
+            this.modalPrefillCleanup = null;
+        }
+
         if (this.modalRoot) {
             try {
                 // React 18+ cleanup using root

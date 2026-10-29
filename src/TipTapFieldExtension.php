@@ -287,8 +287,30 @@ class TipTapFieldExtension extends Extension
         }
 
         $parsedValue = ImageShortcodeProvider::regenerate_html_links($value);
+        $parsedValue = TipTapEmbedShortcodeHandlerExtension::iframetoembed($parsedValue);
+
         if ($parsedValue !== $value) {
             $this->owner->setValue($parsedValue);
         }
     }
+    /**
+     * Ensure image shortcodes are converted to editor-visible img tags before rendering.
+     */
+    public function RawShortcodesForEditor()
+    {
+        if (!$this->owner instanceof HTMLEditorField) {
+            return;
+        }
+
+        $value = $this->owner->getValue();
+        if (!is_string($value) || $value === '') {
+            return;
+        }
+
+        $parsedValue = ImageShortcodeProvider::regenerate_html_links($value);
+        $parsedValue = TipTapEmbedShortcodeHandlerExtension::iframetoembed($parsedValue);
+
+        return $parsedValue;
+    }
 }
+

@@ -1,7 +1,7 @@
 /**
  * The main binding between SilverStripe and TipTap. This file handles the initialization of the TipTap editor, toolbar creation, and event handling.
  */
-import { Editor,getNodeType } from '@tiptap/core';
+import { Editor, Node as TipTapNode, getNodeType } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
@@ -155,6 +155,70 @@ const TipTapImageResize = ImageResize.extend({
       ...(this.parent?.() || {}),
       'data-id': imageIdAttribute,
     };
+  },
+});
+
+const Embed = TipTapNode.create({
+  name: 'embed',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      'data-provider': {
+        default: null,
+        parseHTML: element => element.getAttribute('data-provider'),
+        renderHTML: attributes => (attributes['data-provider'] ? { 'data-provider': attributes['data-provider'] } : {}),
+      },
+      'data-id': {
+        default: null,
+        parseHTML: element => element.getAttribute('data-id'),
+        renderHTML: attributes => (attributes['data-id'] ? { 'data-id': attributes['data-id'] } : {}),
+      },
+      'data-url': {
+        default: null,
+        parseHTML: element => element.getAttribute('data-url'),
+        renderHTML: attributes => (attributes['data-url'] ? { 'data-url': attributes['data-url'] } : {}),
+      },
+      'width': {
+        default: null,
+        parseHTML: element => element.getAttribute('width'),
+        renderHTML: attributes => (attributes['width'] ? { 'width': attributes['width'] } : {}),
+      },
+      'height': {
+        default: null,
+        parseHTML: element => element.getAttribute('height'),
+        renderHTML: attributes => (attributes['height'] ? { 'height': attributes['height'] } : {}),
+      },
+      'src': {
+        default: null,
+        parseHTML: element => element.getAttribute('src'),
+        renderHTML: attributes => (attributes['src'] ? { 'src': attributes['src'] } : {}),
+      },
+      'type': {
+        default: null,
+        parseHTML: element => element.getAttribute('type'),
+        renderHTML: attributes => (attributes['type'] ? { 'type': attributes['type'] } : {}),
+      },
+      'style': {
+        default: null,
+        parseHTML: element => element.getAttribute('style'),
+        renderHTML: attributes => (attributes['style'] ? { 'style': attributes['style'] } : {}),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      { tag: 'embed' },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    // Normalize output to the custom tag currently used by this project.
+    return ['embed', HTMLAttributes];
   },
 });
 
@@ -334,6 +398,7 @@ function cleanListParagraphs(html) {
               listItem: false,
             }),
             TipTapImageResize,
+            Embed,
             BulletList,
             OrderedList,
             InlineListItem,

@@ -9,6 +9,10 @@ SilverStripe\Admin\LeftAndMain:
   extra_requirements_javascript:
     - 'otago/silverstripe-tiptap: client/dist/silverstripe-tiptap.iife.js'
 
+SilverStripe\View\Parsers\ShortcodeParser:
+  extensions:
+    - OP\TipTapEmbedShortcodeHandlerExtension
+
 SilverStripe\Forms\HTMLEditor\HTMLEditorField:
   extensions:
     - OP\TipTapFieldExtension
@@ -113,4 +117,11 @@ SilverStripe\Forms\HTMLEditor\HTMLEditorConfig:
     img:
       attributes:
         'data-id': true
+    embed:
+      attributes:
+        'data-id': true
+        width: true
+        height: true
+        style: true
+        src: true
 
