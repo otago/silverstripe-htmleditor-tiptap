@@ -1,5 +1,7 @@
-// src/tiptap.entwine.js
-import { Editor } from '@tiptap/core';
+/**
+ * The main binding between SilverStripe and TipTap. This file handles the initialization of the TipTap editor, toolbar creation, and event handling.
+ */
+import { Editor, Node as TipTapNode, getNodeType } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
@@ -20,6 +22,10 @@ import screenfull from 'screenfull';
 import InternalAnchor from './InternalAnchor';
 import { Indent } from './indent';
 //import { ImagePlus } from 'tiptap-image-plus';
+import ListItem from '@tiptap/extension-list-item';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+
 
 import {
   initializeLinkBubbleMenu,
@@ -152,6 +158,159 @@ const TipTapImageResize = ImageResize.extend({
   },
 });
 
+const Embed = TipTapNode.create({
+  name: 'embed',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      'data-provider': {
+        default: null,
+        parseHTML: element => element.getAttribute('data-provider'),
+        renderHTML: attributes => (attributes['data-provider'] ? { 'data-provider': attributes['data-provider'] } : {}),
+      },
+      'data-id': {
+        default: null,
+        parseHTML: element => element.getAttribute('data-id'),
+        renderHTML: attributes => (attributes['data-id'] ? { 'data-id': attributes['data-id'] } : {}),
+      },
+      'data-url': {
+        default: null,
+        parseHTML: element => element.getAttribute('data-url'),
+        renderHTML: attributes => (attributes['data-url'] ? { 'data-url': attributes['data-url'] } : {}),
+      },
+      'width': {
+        default: null,
+        parseHTML: element => element.getAttribute('width'),
+        renderHTML: attributes => (attributes['width'] ? { 'width': attributes['width'] } : {}),
+      },
+      'height': {
+        default: null,
+        parseHTML: element => element.getAttribute('height'),
+        renderHTML: attributes => (attributes['height'] ? { 'height': attributes['height'] } : {}),
+      },
+      'src': {
+        default: null,
+        parseHTML: element => element.getAttribute('src'),
+        renderHTML: attributes => (attributes['src'] ? { 'src': attributes['src'] } : {}),
+      },
+      'type': {
+        default: null,
+        parseHTML: element => element.getAttribute('type'),
+        renderHTML: attributes => (attributes['type'] ? { 'type': attributes['type'] } : {}),
+      },
+      'style': {
+        default: null,
+        parseHTML: element => element.getAttribute('style'),
+        renderHTML: attributes => (attributes['style'] ? { 'style': attributes['style'] } : {}),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      { tag: 'embed' },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    // Normalize output to the custom tag currently used by this project.
+    return ['embed', HTMLAttributes];
+  },
+});
+
+
+function changeChildNodeTypes(content, sourceTypeName, targetType) {
+  let newContent = content;
+
+  for (let i = 0; i < content.childCount; i++) {
+    const node = content.child(i);
+
+    if (node.type.name === sourceTypeName) {
+      const targetNode = targetType.create(node.attrs, node.content, node.marks);
+      newContent = newContent.replaceChild(i, targetNode);
+    }
+  }
+
+  return newContent;
+};
+
+
+
+const InlineListItem = ListItem.extend({
+  content: "text*",
+
+  addCommands() {
+    return {
+      liftListItem:
+        () =>
+        ({ tr, state, dispatch }) => {
+          const paragraphType = getNodeType("paragraph", state.schema);
+
+          const { $from, $to } = tr.selection;
+          const range = $from.blockRange($to);
+
+          if (!range) {
+            return false;
+          }
+
+          if (dispatch) {
+            const content = tr.doc.slice(range.start, range.end).content;
+
+            const paragraphs = changeChildNodeTypes(content, "listItem", paragraphType);
+
+            // -1 to delete the parent list
+            tr.replaceWith(range.start - 1, range.end, paragraphs);
+          }
+
+          return true;
+        },
+      wrapInList:
+        (typeOrName, attributes = {}) =>
+        ({ tr, state, dispatch }) => {
+          const listType = getNodeType(typeOrName, state.schema);
+          const listItemType = getNodeType("listItem", state.schema);
+
+          const { $from, $to } = tr.selection;
+          const range = $from.blockRange($to);
+
+          if (!range) {
+            return false;
+          }
+
+          if (dispatch) {
+            const content = tr.doc.slice(range.start, range.end).content;
+
+            const listItems = changeChildNodeTypes(content, "paragraph", listItemType);
+
+            const listNode = listType.create(attributes, listItems);
+
+            tr.replaceWith(range.start, range.end, listNode);
+          }
+
+          return true;
+        },
+    };
+  },
+});
+
+
+function cleanListParagraphs(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  doc.querySelectorAll('li').forEach(li => {
+    const children = Array.from(li.children);
+
+    if (children.length === 1 && children[0].tagName === 'P') {
+      li.innerHTML = children[0].innerHTML;
+    }
+  });
+  return doc.body.innerHTML;
+}
+
 
 (function ($) {
   // Configuration constants
@@ -236,9 +395,13 @@ const TipTapImageResize = ImageResize.extend({
               link: {
                 openOnClick: false,
               },
+              listItem: false,
             }),
             TipTapImageResize,
-            //ImagePlus,
+            Embed,
+            BulletList,
+            OrderedList,
+            InlineListItem,
             Youtube,
             // Additional extensions not included in StarterKit
             //Underline,
